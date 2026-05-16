@@ -1,0 +1,104 @@
+name: Build & Publish Site
+
+on:
+  repository_dispatch:
+    types: [wetnose-publish]
+  workflow_dispatch:
+    inputs:
+      kennelId:
+        required: true
+      siteId:
+        required: true
+      buildId:
+        required: false
+        default: manual
+      environment:
+        required: true
+        type: choice
+        options: [dev, production]
+      apiUrl:
+        required: true
+      pagesProjectName:
+        required: true
+      webhookUrl:
+        required: false
+
+concurrency:
+  group: build-${{ github.event.client_payload.siteId || github.event.inputs.siteId }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      KENNEL_ID: ${{ github.event.client_payload.kennelId || github.event.inputs.kennelId }}
+      SITE_ID: ${{ github.event.client_payload.siteId || github.event.inputs.siteId }}
+      BUILD_ID: ${{ github.event.client_payload.buildId || github.event.inputs.buildId }}
+      TARGET_ENV: ${{ github.event.client_payload.environment || github.event.inputs.environment }}
+      API_URL: ${{ github.event.client_payload.apiUrl || github.event.inputs.apiUrl }}
+      PAGES_PROJECT_NAME: ${{ github.event.client_payload.pagesProjectName || github.event.inputs.pagesProjectName }}
+      WEBHOOK_URL: ${{ github.event.client_payload.webhookUrl || github.event.inputs.webhookUrl }}
+      # Sensitive: only present on repository_dispatch payloads. Masked in the first step.
+      READONLY_KEY: ${{ github.event.client_payload.readOnlyKey }}
+
+    steps:
+      - name: Mask read-only key
+        if: env.READONLY_KEY != ''
+        run: echo "::add-mask::${READONLY_KEY}"
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build Astro site
+        env:
+          WETNOSE_API_URL: ${{ env.API_URL }}
+          WETNOSE_API_KEY: ${{ env.READONLY_KEY }}
+          WETNOSE_KENNEL_ID: ${{ env.KENNEL_ID }}
+          WETNOSE_SITE_ID: ${{ env.SITE_ID }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: e664c93ca10fc777f72b64c83cc34687
+          command: pages deploy dist --project-name=${{ env.PAGES_PROJECT_NAME }} --branch=main
+
+      - name: Report success
+        if: success() && env.WEBHOOK_URL != ''
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WETNOSE_BUILD_WEBHOOK_SECRET }}
+        run: |
+          BODY=$(jq -nc \
+            --arg buildId "$BUILD_ID" \
+            --arg siteId "$SITE_ID" \
+            --arg status "success" \
+            '{buildId:$buildId, siteId:$siteId, status:$status}')
+          SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | awk '{print $2}')
+          curl -fsS -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Wetnose-Signature: $SIG" \
+            --data "$BODY"
+
+      - name: Report failure
+        if: failure() && env.WEBHOOK_URL != ''
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WETNOSE_BUILD_WEBHOOK_SECRET }}
+        run: |
+          BODY=$(jq -nc \
+            --arg buildId "$BUILD_ID" \
+            --arg siteId "$SITE_ID" \
+            --arg status "failed" \
+            --arg error "GHA run ${{ github.run_id }} failed; see logs." \
+            '{buildId:$buildId, siteId:$siteId, status:$status, error:$error}')
+          SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | awk '{print $2}')
+          curl -fsS -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Wetnose-Signature: $SIG" \
+            --data "$BODY"

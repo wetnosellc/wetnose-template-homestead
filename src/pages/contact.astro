@@ -1,0 +1,160 @@
+---
+import Base from '@/layouts/Base.astro';
+const KENNEL_ID = import.meta.env.WETNOSE_KENNEL_ID ?? '';
+const APP_URL = import.meta.env.WETNOSE_APP_URL ?? 'https://app.wetno.se';
+
+const faqCategories = [
+  {
+    title: "Available Puppies",
+    questions: [
+      "Do you have puppies available now?",
+      "How do I get on the waiting list?",
+      "What is your puppy application process?",
+      "How much do puppies cost?",
+    ],
+    href: "/litters",
+  },
+  {
+    title: "About Our Dogs",
+    questions: [
+      "Can I meet your breeding dogs?",
+      "What health testing do you do?",
+      "What titles do your dogs have?",
+      "How are puppies socialized?",
+    ],
+    href: "/dogs",
+  },
+  {
+    title: "Breed Information",
+    questions: [
+      "What's the difference between White Swiss and AKC White Shepherds?",
+      "Are White Swiss Shepherds good with children?",
+      "How much exercise do they need?",
+      "What is their temperament like?",
+    ],
+    href: "/breed-info/fci-standard",
+  },
+];
+---
+
+<Base title="Contact Us" description="Get in touch with Moro Shepherds — we love hearing from people interested in White Swiss Shepherds.">
+
+  <!-- Page header -->
+  <div class="mx-auto max-w-6xl px-4 pt-12 pb-4 text-center">
+    <h1 class="text-4xl font-bold text-foreground mb-4">Contact Us</h1>
+    <p class="text-lg text-muted-foreground max-w-3xl mx-auto">
+      We love hearing from people interested in White Swiss Shepherds. Whether you're looking for a puppy,
+      have questions about the breed, or just want to chat about our dogs, we're here to help.
+    </p>
+  </div>
+
+  <!-- Main content: sidebar + iframe form -->
+  <div class="mx-auto max-w-6xl px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+    <!-- Sidebar -->
+    <div class="space-y-5">
+
+      <!-- Get in Touch -->
+      <div class="bg-white rounded-xl border border-border shadow-sm p-5">
+        <h2 class="text-xl font-bold text-foreground mb-4">Get in Touch</h2>
+        <p class="text-sm font-semibold text-foreground mb-0.5">Email</p>
+        <p class="text-sm text-primary font-medium mb-2">info@moroshepherds.com</p>
+        <p class="text-sm text-muted-foreground">Best for detailed inquiries about puppies or our breeding program.</p>
+      </div>
+
+      <!-- Puppy Application -->
+      <div class="bg-orange-50 border border-orange-200 rounded-xl shadow-sm p-5">
+        <p class="text-sm font-bold text-foreground mb-0.5">Puppy Application Process</p>
+        <p class="text-sm text-primary font-medium mb-2">Complete screening questionnaire</p>
+        <p class="text-sm text-muted-foreground mb-4">
+          If you're interested in purchasing a puppy from us, start by completing our comprehensive
+          screening questionnaire. This helps us understand your needs and ensures a great match.
+        </p>
+        <a
+          href="/screening"
+          class="block w-full text-center bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Begin Screening Process
+        </a>
+      </div>
+
+      <!-- Location -->
+      <div class="bg-blue-50 border border-blue-200 rounded-xl shadow-sm p-5">
+        <p class="text-sm font-bold text-foreground mb-1">Location</p>
+        <p class="text-sm text-muted-foreground mb-1">Scio, Oregon USA</p>
+        <p class="text-sm text-muted-foreground">Farm visits available by appointment for serious puppy inquiries.</p>
+      </div>
+    </div>
+
+    <!-- Contact iframe -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="px-6 pt-6 pb-2">
+          <h2 class="text-xl font-bold text-foreground mb-1">Send us a Message</h2>
+          <p class="text-sm text-muted-foreground">Fill out the form below and we'll get back to you as soon as possible.</p>
+        </div>
+        <iframe
+          src={`${APP_URL}/contact/${KENNEL_ID}`}
+          width="100%"
+          style="height: 680px; border: none; display: block;"
+          title="Contact form"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Section -->
+  <div class="mx-auto max-w-6xl px-4 pb-16">
+    <div class="text-center mb-8">
+      <h2 class="text-2xl font-bold text-foreground mb-2">Frequently Asked Questions</h2>
+      <p class="text-muted-foreground">Common questions we receive. Don't see yours? Feel free to ask!</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {faqCategories.map(cat => (
+        <div class="bg-white rounded-xl border border-border shadow-sm p-6">
+          <h3 class="font-bold text-foreground mb-4">{cat.title}</h3>
+          <ul class="space-y-2 mb-5">
+            {cat.questions.map(q => (
+              <li class="text-sm text-muted-foreground flex items-start gap-2">
+                <span class="text-primary mt-0.5 flex-shrink-0">•</span>
+                {q}
+              </li>
+            ))}
+          </ul>
+          <a
+            href={cat.href}
+            class="block w-full text-center text-sm font-medium border border-border rounded-lg px-4 py-2 hover:bg-secondary transition-colors"
+          >
+            Learn More
+          </a>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- CTA Banner -->
+  <div class="bg-accent text-accent-foreground py-14 px-4">
+    <div class="max-w-2xl mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-4">Ready to Learn More?</h2>
+      <p class="text-lg text-accent-foreground/80 mb-8">
+        We're passionate about our dogs and love sharing information about the White Swiss Shepherd breed.
+        Whether you're ready for a puppy or just curious, we're here to help.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a
+          href="mailto:info@moroshepherds.com"
+          class="inline-block bg-primary text-white font-semibold px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-lg"
+        >
+          Email Us Now
+        </a>
+        <a
+          href="/screening"
+          class="inline-block border border-accent-foreground/40 text-accent-foreground font-semibold px-8 py-3 rounded-lg hover:bg-accent-foreground/10 transition-colors"
+        >
+          Start Application
+        </a>
+      </div>
+    </div>
+  </div>
+
+</Base>

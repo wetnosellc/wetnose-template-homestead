@@ -1,0 +1,120 @@
+---
+import Base from '@/layouts/Base.astro';
+import DogCard from '@/components/DogCard.astro';
+import { fetchDogs } from '@/lib/wetnose';
+import { dogSlug, buildDogSlugMap } from '@/lib/slugs';
+import type { Dog } from '@/lib/wetnose';
+
+const result = await fetchDogs({ limit: '100', showOnWebsite: 'true' });
+const dogs = [...result.items].sort((a, b) =>
+  (a.callName ?? a.registeredName).localeCompare(b.callName ?? b.registeredName),
+);
+
+const slugMap = buildDogSlugMap(dogs);
+const idToSlug = new Map<string, string>();
+for (const [slug, id] of slugMap) {
+  idToSlug.set(id, slug);
+}
+
+const RETIRED_STATUSES = new Set(['Retired', 'Historical', 'Deceased']);
+
+const males = dogs.filter(d => d.sex === 'M' && !RETIRED_STATUSES.has(d.status) && !d.forSale);
+const females = dogs.filter(d => d.sex === 'F' && !RETIRED_STATUSES.has(d.status) && !d.forSale);
+const forSale = dogs.filter(d => d.forSale);
+const retired = dogs.filter(d => RETIRED_STATUSES.has(d.status));
+
+interface SectionDef {
+  id: string;
+  label: string;
+  description: string;
+  dogs: Dog[];
+  imageUrl?: string | null;
+}
+
+const sections: SectionDef[] = [
+  {
+    id: 'males',
+    label: 'Our Males',
+    description: 'Meet our exceptional male White Swiss Shepherds — proven studs with champion bloodlines, comprehensive health clearances, and outstanding temperament.',
+    dogs: males,
+    imageUrl: null,
+  },
+  {
+    id: 'females',
+    label: 'Our Females',
+    description: 'Discover our remarkable female White Swiss Shepherds, featuring our accomplished dams, rising stars, and retired champions who have shaped our breeding program.',
+    dogs: females,
+    imageUrl: null,
+  },
+  {
+    id: 'for-sale',
+    label: 'Dogs For Sale',
+    description: 'Adult dogs available to approved homes. Each dog comes with full health records, pedigree documentation, and ongoing breeder support.',
+    dogs: forSale,
+    imageUrl: null,
+  },
+  {
+    id: 'retired',
+    label: 'Retired Champions',
+    description: 'Our beloved retired dogs who have contributed so much to the Moro Shepherds legacy. Their genetics and spirit live on in every puppy we produce.',
+    dogs: retired,
+    imageUrl: null,
+  },
+].filter(s => s.dogs.length > 0);
+---
+
+<Base title="Our Dogs">
+  <!-- Page header -->
+  <div class="text-center py-12 px-4 bg-white border-b border-border">
+    <h1 class="text-4xl font-bold text-foreground mb-3">Our Dogs</h1>
+    <p class="text-muted-foreground max-w-2xl mx-auto">
+      Meet the dogs of Moro Shepherds — exceptional White Swiss Shepherds bred for health, temperament, and beauty.
+    </p>
+
+    <!-- Anchor nav -->
+    {sections.length > 0 && (
+      <nav class="flex flex-wrap justify-center gap-2 mt-6">
+        {sections.map(s => (
+          <a
+            href={`#${s.id}`}
+            class="px-4 py-1.5 text-sm font-medium border border-border rounded-full hover:bg-secondary transition-colors"
+          >
+            {s.label} ({s.dogs.length})
+          </a>
+        ))}
+      </nav>
+    )}
+  </div>
+
+  <div class="mx-auto max-w-7xl px-4 py-10">
+    {sections.map(section => (
+      <section id={section.id} class="mb-20 scroll-mt-24">
+        <!-- Section title image (add imageUrl to SectionDef above to enable) -->
+        {section.imageUrl && (
+          <img
+            src={section.imageUrl}
+            alt={section.label}
+            class="w-full h-48 object-cover rounded-xl mb-6"
+          />
+        )}
+
+        <!-- Section header -->
+        <div class="text-center mb-8">
+          <h2 class="text-3xl font-bold text-foreground mb-2">{section.label}</h2>
+          <p class="text-muted-foreground max-w-2xl mx-auto text-sm">{section.description}</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {section.dogs.map(dog => {
+            const slug = idToSlug.get(dog.id) ?? dogSlug(dog);
+            return <DogCard dog={dog} slug={slug} />;
+          })}
+        </div>
+      </section>
+    ))}
+
+    {dogs.length === 0 && (
+      <p class="text-muted-foreground text-center py-16">No dogs to display at this time.</p>
+    )}
+  </div>
+</Base>

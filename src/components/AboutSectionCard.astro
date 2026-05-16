@@ -1,0 +1,30 @@
+---
+interface Props {
+  title: string;
+  iconInner: string;
+}
+const { title, iconInner } = Astro.props;
+---
+<div class="bg-blue-100 rounded-xl border border-blue-200 shadow-md overflow-hidden">
+  <div class="px-6 pt-6 pb-4 border-b border-gray-200/50">
+    <h2 class="flex items-center gap-3 text-gray-700 font-semibold text-lg leading-snug">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="text-red-600 shrink-0 w-6 h-6"
+        set:html={iconInner}
+      />
+      {title}
+    </h2>
+  </div>
+  <div class="px-6 py-5 text-gray-600 text-sm leading-relaxed space-y-3">
+    <slot />
+  </div>
+</div>

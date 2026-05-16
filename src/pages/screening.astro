@@ -1,0 +1,20 @@
+---
+import Base from '@/layouts/Base.astro';
+const KENNEL_ID = import.meta.env.WETNOSE_KENNEL_ID ?? '';
+const APP_URL = import.meta.env.WETNOSE_APP_URL ?? 'https://app.wetno.se';
+---
+
+<Base title="Puppy Application" description="Apply for a puppy from Moro Shepherds.">
+  <div class="mx-auto max-w-4xl px-4 py-10">
+    <h1 class="text-4xl font-bold text-foreground mb-2">Puppy Application</h1>
+    <p class="text-muted-foreground mb-8">Complete the screening form below to be considered for one of our puppies. We carefully match each puppy to the right family.</p>
+    <div class="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+      <iframe
+        src={`${APP_URL}/public/kennels/${KENNEL_ID}/apply?type=screening`}
+        width="100%"
+        style="height: 80vh; border: none; display: block;"
+        title="Puppy application form"
+      />
+    </div>
+  </div>
+</Base>

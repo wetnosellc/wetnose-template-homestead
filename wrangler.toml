@@ -1,0 +1,26 @@
+# User-Worker template for the Wetnose "Classic" CMS template.
+#
+# This file is a template — the build pipeline (Phase 4) substitutes
+# `{{KENNEL_ID}}` and the target dispatch namespace before running
+# `wrangler deploy`. For the manual Phase 3 moroshepherds deploy, copy this
+# to `wrangler.kennel-moroshepherds.toml`, fill in the kennelId, and run
+# wrangler against that file directly.
+#
+# Reference: docs/cms-deployment.md in the @wetnose/refactor repo.
+
+name = "kennel-{{KENNEL_ID}}"
+main = "worker/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "e664c93ca10fc777f72b64c83cc34687"
+
+# Workers Static Assets serves the built Astro output. `not_found_handling`
+# = "404-page" makes /missing return dist/404.html instead of the default
+# Workers 404 — Astro emits 404.html on build.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+# This Worker is deployed *into* the dispatch namespace via the
+# `--dispatch-namespace wetnose-sites` flag on `wrangler deploy` — there is
+# no wrangler.toml binding for that direction. See docs/cms-deployment.md.

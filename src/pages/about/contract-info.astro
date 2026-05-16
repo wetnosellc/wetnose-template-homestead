@@ -1,0 +1,56 @@
+---
+import Base from '@/layouts/Base.astro';
+import AboutSectionCard from '@/components/AboutSectionCard.astro';
+import { getEntry } from 'astro:content';
+import { parseSections } from '@/lib/parse-sections';
+
+const entry = await getEntry('about', 'contract-info');
+const sections = parseSections(entry.body);
+
+const HEART = `<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>`;
+const FILE_TEXT = `<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>`;
+const SHIELD = `<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>`;
+const INFO = `<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>`;
+
+const ICON_MAP: Record<string, string> = {
+  'Understanding White Shepherd Ownership': HEART,
+  'Your Obligations as a Buyer': FILE_TEXT,
+  "Moro Shepherds' Obligations & Guarantees": SHIELD,
+};
+---
+
+<Base title={`${entry.data.title} — Moro Shepherds`} description={entry.data.description}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <a href="/" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Home
+    </a>
+    <div class="bg-white rounded-xl border border-gray-200/50 shadow-lg overflow-hidden">
+      <div class="p-8">
+        <div class="text-center mb-10">
+          <h1 class="text-4xl font-bold text-gray-700 mb-2">{entry.data.title}</h1>
+          {entry.data.description && <p class="text-lg text-gray-500 max-w-2xl mx-auto">{entry.data.description}</p>}
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6 flex gap-3">
+          <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+          <p class="text-sm text-amber-800"><strong>Important Notice:</strong> In order to be approved for purchase, you must understand the following, and fill out completely the form linked at the bottom of the page.</p>
+        </div>
+        <div class="space-y-4">
+          {sections.map(({ heading, html }) => (
+            <AboutSectionCard title={heading} iconInner={ICON_MAP[heading] ?? INFO}>
+              <div set:html={html} class="space-y-2" />
+            </AboutSectionCard>
+          ))}
+        </div>
+        <div class="mt-8 bg-white border border-gray-200/50 rounded-xl shadow-md p-8 text-center">
+          <h2 class="text-2xl font-bold text-gray-700 mb-3">Ready to Apply?</h2>
+          <p class="text-gray-500 mb-6 max-w-xl mx-auto text-sm">If you understand and agree to all of the above, and wish to apply to reserve a puppy or purchase an adult that we have listed for sale, please fill out the following application. This is not a formal commitment — it is merely a screening tool to help us make informed decisions about matching each dog/puppy to the specific family.</p>
+          <a href="/screening" class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+            Begin Screening Questionnaire
+          </a>
+          <p class="text-xs text-gray-400 mt-3">Start your puppy application process</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>

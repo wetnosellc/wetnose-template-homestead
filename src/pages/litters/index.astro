@@ -1,0 +1,132 @@
+---
+import Base from '@/layouts/Base.astro';
+import LitterCard from '@/components/LitterCard.astro';
+import { fetchLitters } from '@/lib/wetnose';
+import { getLitterStatus } from '@/lib/litter-status';
+import { litterSlug, buildLitterSlugMap } from '@/lib/slugs';
+import type { Litter } from '@/lib/wetnose';
+import type { LitterStatus } from '@/lib/litter-status';
+
+const result = await fetchLitters({ limit: '100' });
+const litters = result.items;
+
+const slugMap = buildLitterSlugMap(litters);
+const idToSlug = new Map<string, string>();
+for (const [slug, id] of slugMap) {
+  idToSlug.set(id, slug);
+}
+
+type LitterEntry = { litter: Litter; slug: string; status: LitterStatus };
+
+const grouped: Record<LitterStatus, LitterEntry[]> = {
+  Current: [],
+  Upcoming: [],
+  Planned: [],
+  'Sold Out': [],
+  Past: [],
+  Unknown: [],
+};
+
+for (const litter of litters) {
+  const status = getLitterStatus(litter);
+  const slug = idToSlug.get(litter.id) ?? litterSlug(litter);
+  grouped[status].push({ litter, slug, status });
+}
+
+const activeItems = [
+  ...grouped['Current'],
+  ...grouped['Upcoming'],
+  ...grouped['Planned'],
+];
+
+const pastItems = [
+  ...grouped['Sold Out'],
+  ...grouped['Past'],
+  ...grouped['Unknown'],
+];
+---
+
+<Base title="Litters">
+  <div class="mx-auto max-w-7xl px-4 py-10">
+    <h1 class="text-4xl font-bold text-foreground mb-2">Litters</h1>
+    <p class="text-muted-foreground mb-8">Current, upcoming, and past litters from Moro Shepherds.</p>
+
+    <!-- Tab switcher -->
+    <div class="flex gap-1 border-b border-border mb-10">
+      <button
+        id="tab-active"
+        class="px-5 py-2.5 text-sm font-semibold border-b-2 border-primary text-primary -mb-px transition-colors"
+        onclick="switchTab('active')"
+      >
+        Current &amp; Upcoming
+        {activeItems.length > 0 && <span class="ml-1.5 text-xs bg-primary text-white rounded-full px-1.5 py-0.5">{activeItems.length}</span>}
+      </button>
+      <button
+        id="tab-past"
+        class="px-5 py-2.5 text-sm font-semibold border-b-2 border-transparent text-muted-foreground hover:text-foreground -mb-px transition-colors"
+        onclick="switchTab('past')"
+      >
+        Past Litters
+        {pastItems.length > 0 && <span class="ml-1.5 text-xs bg-secondary text-muted-foreground rounded-full px-1.5 py-0.5">{pastItems.length}</span>}
+      </button>
+    </div>
+
+    <!-- Active/Upcoming panel -->
+    <div id="panel-active">
+      {activeItems.length > 0 ? (
+        <div class="flex flex-col gap-6">
+          {activeItems.map(({ litter, slug, status }) => (
+            <LitterCard litter={litter} slug={slug} status={status} />
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">No current or upcoming litters at this time.</p>
+      )}
+    </div>
+
+    <!-- Past panel -->
+    <div id="panel-past" class="hidden">
+      {pastItems.length > 0 ? (
+        <div class="flex flex-col gap-6">
+          {pastItems.map(({ litter, slug, status }) => (
+            <LitterCard litter={litter} slug={slug} status={status} />
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">No past litters to display.</p>
+      )}
+    </div>
+
+    {litters.length === 0 && (
+      <p class="text-muted-foreground text-center py-16">No litters to display at this time.</p>
+    )}
+  </div>
+</Base>
+
+<script>
+  function switchTab(tab: string) {
+    const activeBtn = document.getElementById('tab-active');
+    const pastBtn = document.getElementById('tab-past');
+    const activePanel = document.getElementById('panel-active');
+    const pastPanel = document.getElementById('panel-past');
+
+    if (tab === 'active') {
+      activeBtn?.classList.add('border-primary', 'text-primary');
+      activeBtn?.classList.remove('border-transparent', 'text-muted-foreground');
+      pastBtn?.classList.remove('border-primary', 'text-primary');
+      pastBtn?.classList.add('border-transparent', 'text-muted-foreground');
+      activePanel?.classList.remove('hidden');
+      pastPanel?.classList.add('hidden');
+    } else {
+      pastBtn?.classList.add('border-primary', 'text-primary');
+      pastBtn?.classList.remove('border-transparent', 'text-muted-foreground');
+      activeBtn?.classList.remove('border-primary', 'text-primary');
+      activeBtn?.classList.add('border-transparent', 'text-muted-foreground');
+      pastPanel?.classList.remove('hidden');
+      activePanel?.classList.add('hidden');
+    }
+  }
+
+  // Expose globally for onclick attributes
+  (window as any).switchTab = switchTab;
+</script>

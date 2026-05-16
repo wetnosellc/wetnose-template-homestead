@@ -1,0 +1,208 @@
+---
+import Base from '@/layouts/Base.astro';
+import PhotoGallery from '@/components/PhotoGallery.tsx';
+import { fetchDogs, fetchDog, fetchHealthClearances, fetchTitles } from '@/lib/wetnose';
+import { dogSlug, buildDogSlugMap } from '@/lib/slugs';
+
+export async function getStaticPaths() {
+  const result = await fetchDogs({ limit: '100', showOnWebsite: 'true' });
+  const dogs = result.items;
+  const slugMap = buildDogSlugMap(dogs);
+  return Array.from(slugMap.entries()).map(([slug, dogId]) => ({
+    params: { slug },
+    props: { dogId },
+  }));
+}
+
+interface Props {
+  dogId: string;
+}
+const { dogId } = Astro.props;
+
+const [dog, clearances, titles] = await Promise.all([
+  fetchDog(dogId),
+  fetchHealthClearances(dogId).catch(() => []),
+  fetchTitles(dogId).catch(() => []),
+]);
+
+const galleryPhotos = dog.photos.length > 0
+  ? dog.photos.map(p => ({ url: p.url, caption: p.caption }))
+  : dog.thumbnailPhotoUrl
+    ? [{ url: dog.thumbnailPhotoUrl, caption: null }]
+    : [];
+
+function ageFromBirthDate(birthDate: string | null, dateOfDeath?: string | null): string {
+  if (!birthDate) return '';
+  const birth = new Date(birthDate);
+  const end = dateOfDeath ? new Date(dateOfDeath) : new Date();
+  const totalMonths = (end.getFullYear() - birth.getFullYear()) * 12 + (end.getMonth() - birth.getMonth());
+  if (totalMonths < 1) return '1 month';
+  if (totalMonths < 12) return `${totalMonths} month${totalMonths === 1 ? '' : 's'}`;
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (months === 0) return `${years} year${years === 1 ? '' : 's'}`;
+  return `${years} year${years === 1 ? '' : 's'}, ${months} month${months === 1 ? '' : 's'}`;
+}
+
+const currentSlug = dogSlug(dog);
+const ogImage = galleryPhotos[0]?.url ?? dog.thumbnailPhotoUrl ?? null;
+const metaTitle = `${dog.callName ?? dog.registeredName} — Moro Shepherds`;
+const metaDesc = dog.description
+  ? dog.description.slice(0, 160).trimEnd() + (dog.description.length > 160 ? '…' : '')
+  : `${dog.callName ?? dog.registeredName} is a White Swiss Shepherd at Moro Shepherds.`;
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://moroshepherds.com" },
+    { "@type": "ListItem", "position": 2, "name": "Dogs", "item": "https://moroshepherds.com/dogs" },
+    { "@type": "ListItem", "position": 3, "name": dog.callName ?? dog.registeredName, "item": `https://moroshepherds.com/dogs/${currentSlug}` },
+  ],
+};
+
+const productJsonLd = dog.forSale ? {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": dog.callName ?? dog.registeredName,
+  "description": metaDesc,
+  "image": ogImage ?? undefined,
+  "offers": {
+    "@type": "Offer",
+    "availability": "https://schema.org/InStock",
+    "priceCurrency": "USD",
+    "price": dog.price ?? undefined,
+    "url": `https://moroshepherds.com/dogs/${currentSlug}`,
+  },
+} : null;
+
+const jsonLd = productJsonLd ? [breadcrumbJsonLd, productJsonLd] : breadcrumbJsonLd;
+---
+
+<Base title={metaTitle} description={metaDesc} ogImage={ogImage} jsonLd={jsonLd}>
+  <div class="mx-auto max-w-3xl px-4 py-10">
+    <!-- Back link -->
+    <a href="/dogs" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Dogs
+    </a>
+
+    <!-- Title block -->
+    <div class="text-center mb-6">
+      <h1 class="text-3xl font-bold text-foreground">{dog.registeredName}</h1>
+      {dog.callName && (
+        <p class="text-lg text-muted-foreground mt-1">"{dog.callName}"</p>
+      )}
+    </div>
+
+    <!-- Photo carousel -->
+    <div class="mb-6 rounded-xl overflow-hidden">
+      {galleryPhotos.length > 0 ? (
+        <PhotoGallery
+          client:visible
+          photos={galleryPhotos}
+          altPrefix={dog.callName ?? dog.registeredName}
+        />
+      ) : (
+        <div class="w-full aspect-video bg-stone-200 flex items-center justify-center text-muted-foreground">
+          No photos available
+        </div>
+      )}
+    </div>
+
+    <!-- Info card -->
+    <div class="bg-white border border-border rounded-xl p-6 mb-6 space-y-4">
+      <div>
+        <h2 class="text-xl font-bold text-foreground mb-2">{dog.callName ?? dog.registeredName}</h2>
+        <div class="flex flex-wrap gap-2">
+          <span class={`text-sm px-3 py-1 rounded-full font-medium ${
+            dog.status === 'Active' ? 'bg-gray-900 text-white' :
+            dog.status === 'Deceased' ? 'bg-red-700 text-white' :
+            'bg-gray-400 text-white'
+          }`}>{dog.status}</span>
+          <span class={`text-sm px-3 py-1 rounded-full font-medium border ${dog.sex === 'M' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-pink-100 text-pink-800 border-pink-300'}`}>
+            {dog.sex === 'M' ? 'Male' : 'Female'}
+          </span>
+          {dog.studServiceAvailable && (
+            <span class="text-sm px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800 border border-blue-300">Stud Service</span>
+          )}
+          {dog.frozenSemenAvailable && (
+            <span class="text-sm px-3 py-1 rounded-full font-medium bg-cyan-100 text-cyan-800 border border-cyan-300">Frozen Semen</span>
+          )}
+          {dog.forSale && (
+            <span class="text-sm px-3 py-1 rounded-full font-medium bg-green-100 text-green-800 border border-green-400">For Sale</span>
+          )}
+        </div>
+      </div>
+
+      {(dog.birthDate || dog.weight || dog.height) && (
+        <p class="text-sm text-muted-foreground flex items-center gap-1">
+          <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          {[
+            dog.birthDate ? `Age ${ageFromBirthDate(dog.birthDate, dog.dateOfDeath)}` : null,
+            dog.weight ? `Weight: ${dog.weight}` : null,
+            dog.height ? `Height: ${dog.height}` : null,
+          ].filter(Boolean).join(' • ')}
+        </p>
+      )}
+
+      {titles.length > 0 && (
+        <div>
+          <p class="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            Accomplishments:
+          </p>
+          <div class="flex flex-wrap gap-2">
+            {titles.map(t => (
+              <span class="text-xs px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-800 border border-yellow-400 font-medium">
+                {t.title?.titleShortname || t.title?.titleName || 'Title'}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {clearances.length > 0 && (
+        <div>
+          <p class="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            Health Tests:
+          </p>
+          <div class="flex flex-wrap gap-2">
+            {clearances.map(c => (
+              <span class="text-xs px-2.5 py-1 rounded-full bg-green-50 text-green-800 border border-green-500 font-medium">
+                {c.healthTestType?.shortName ?? c.healthTestType?.name ?? 'Test'}: {c.result}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <a
+        href={`/dogs/${currentSlug}/pedigree`}
+        class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors text-sm"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        View 3-Generation Pedigree
+      </a>
+    </div>
+
+    <!-- Description -->
+    {dog.description && (
+      <div class="bg-white border border-border rounded-xl p-6 mb-6">
+        <p class="text-muted-foreground whitespace-pre-line">{dog.description}</p>
+      </div>
+    )}
+
+    <!-- Available for Placement -->
+    {dog.forSale && (
+      <div class="bg-white border border-border rounded-xl p-6">
+        <h2 class="text-lg font-bold text-foreground mb-1">Available for Placement</h2>
+        <p class="text-sm text-muted-foreground mb-4">Seeking a special home for this exceptional dog{dog.price ? ` — $${dog.price}` : ''}.</p>
+        <a href="/contact" class="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm">
+          Contact Us
+        </a>
+      </div>
+    )}
+  </div>
+</Base>

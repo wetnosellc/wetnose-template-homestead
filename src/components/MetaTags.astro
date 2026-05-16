@@ -1,0 +1,39 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string | null;
+  ogType?: 'website' | 'article';
+  canonicalUrl?: string;
+}
+
+const {
+  title,
+  description,
+  ogImage,
+  ogType = 'website',
+  canonicalUrl,
+} = Astro.props;
+
+const siteUrl = 'https://moroshepherds.com';
+const canon = canonicalUrl ?? new URL(Astro.url.pathname, siteUrl).toString();
+const resolvedImage = ogImage ?? null;
+---
+<!-- Primary -->
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canon} />
+
+<!-- OpenGraph -->
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canon} />
+<meta property="og:site_name" content="Moro Shepherds" />
+{resolvedImage && <meta property="og:image" content={resolvedImage} />}
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content={resolvedImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{resolvedImage && <meta name="twitter:image" content={resolvedImage} />}

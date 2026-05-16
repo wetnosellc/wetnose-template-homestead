@@ -1,0 +1,57 @@
+---
+import type { PedigreeNode } from '@/lib/wetnose';
+
+interface Props {
+  node: PedigreeNode | null;
+  generation: number;
+  maxGenerations: number;
+}
+
+const { node, generation, maxGenerations } = Astro.props;
+---
+
+{node ? (
+  <div class={`flex flex-col gap-2 ${generation > 0 ? 'justify-around' : ''}`}>
+    <div class={`bg-white border border-border rounded-lg p-2 text-center shadow-sm min-w-0 ${
+      generation === 0 ? 'ring-2 ring-primary' : ''
+    }`}>
+      {node.thumbnailPhotoUrl && generation === 0 && (
+        <img src={node.thumbnailPhotoUrl} alt={node.callName ?? node.registeredName} class="w-16 h-16 rounded-full object-cover mx-auto mb-2" />
+      )}
+      <p class={`font-medium text-foreground leading-tight ${generation === 0 ? 'text-sm' : 'text-xs'}`}>
+        {node.registeredName}
+      </p>
+      {node.callName && generation <= 1 && (
+        <p class="text-xs text-muted-foreground">{node.callName}</p>
+      )}
+      <span class={`inline-block text-xs px-1.5 py-0.5 rounded-full mt-1 ${node.sex === 'M' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
+        {node.sex === 'M' ? 'M' : 'F'}
+      </span>
+    </div>
+
+    {generation < maxGenerations - 1 && (node.sire || node.dam) && (
+      <div class="flex flex-col gap-2 ml-2 pl-2 border-l-2 border-border">
+        {node.sire && (
+          <Astro.self node={node.sire} generation={generation + 1} maxGenerations={maxGenerations} />
+        )}
+        {!node.sire && generation < maxGenerations - 1 && (
+          <div class="bg-secondary border border-border rounded-lg p-2 text-center">
+            <p class="text-xs text-muted-foreground italic">Unknown sire</p>
+          </div>
+        )}
+        {node.dam && (
+          <Astro.self node={node.dam} generation={generation + 1} maxGenerations={maxGenerations} />
+        )}
+        {!node.dam && generation < maxGenerations - 1 && (
+          <div class="bg-secondary border border-border rounded-lg p-2 text-center">
+            <p class="text-xs text-muted-foreground italic">Unknown dam</p>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+) : (
+  <div class="bg-secondary border border-border rounded-lg p-2 text-center">
+    <p class="text-xs text-muted-foreground italic">Unknown</p>
+  </div>
+)}

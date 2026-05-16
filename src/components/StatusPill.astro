@@ -1,0 +1,49 @@
+---
+interface Props {
+  variant: 'active' | 'for-sale' | 'stud' | 'retired' | 'frozen-semen' | 'available' | 'reserved' | 'male' | 'female' | 'current' | 'upcoming' | 'planned' | 'sold-out' | 'past';
+  label?: string;
+}
+
+const { variant, label } = Astro.props;
+
+const styles: Record<string, string> = {
+  active: 'bg-blue-600 text-white',
+  'for-sale': 'bg-orange-500 text-white',
+  stud: 'bg-teal-600 text-white',
+  retired: 'bg-gray-400 text-white',
+  'frozen-semen': 'bg-indigo-600 text-white',
+  available: 'bg-green-600 text-white',
+  reserved: 'bg-amber-500 text-white',
+  male: 'bg-blue-100 text-blue-800',
+  female: 'bg-pink-100 text-pink-800',
+  current: 'bg-green-600 text-white',
+  upcoming: 'bg-amber-500 text-white',
+  planned: 'bg-blue-500 text-white',
+  'sold-out': 'bg-gray-400 text-white',
+  past: 'bg-gray-300 text-gray-700',
+};
+
+const defaultLabels: Record<string, string> = {
+  active: 'Active',
+  'for-sale': 'For Sale',
+  stud: 'Stud Service',
+  retired: 'Retired',
+  'frozen-semen': 'Frozen Semen',
+  available: 'Available',
+  reserved: 'Reserved',
+  male: 'Male',
+  female: 'Female',
+  current: 'Current',
+  upcoming: 'Upcoming',
+  planned: 'Planned',
+  'sold-out': 'Sold Out',
+  past: 'Past',
+};
+
+const cls = styles[variant] ?? 'bg-gray-200 text-gray-700';
+const text = label ?? defaultLabels[variant] ?? variant;
+---
+
+<span class={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${cls}`}>
+  {text}
+</span>

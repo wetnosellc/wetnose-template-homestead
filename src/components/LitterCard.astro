@@ -1,0 +1,122 @@
+---
+import StatusPill from '@/components/StatusPill.astro';
+import type { Litter } from '@/lib/wetnose';
+import type { LitterStatus } from '@/lib/litter-status';
+
+interface Props {
+  litter: Litter;
+  slug: string;
+  status: LitterStatus;
+}
+
+const { litter, slug, status } = Astro.props;
+
+const photoUrl = litter.thumbnailPhotoUrl ?? litter.photos?.[0]?.url ?? null;
+
+function formatDate(d: string | null): string {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+const sireName = litter.sire?.callName ?? litter.sire?.registeredName ?? null;
+const damName = litter.dam?.callName ?? litter.dam?.registeredName ?? null;
+
+const maleCount = litter.puppies?.filter(p => p.sex === 'M').length ?? null;
+const femaleCount = litter.puppies?.filter(p => p.sex === 'F').length ?? null;
+
+const displayName = litter.litterName ?? `${sireName ?? '?'} × ${damName ?? '?'}`;
+const hasDetailPage = litter.litterName !== null;
+
+// Extract short code from litter name (e.g. "Z Litter" → "Z") or first letter of sire/dam
+const code = litter.litterName
+  ? (() => { const p = litter.litterName.trim().split(/\s+/); return p[0].length <= 3 ? p[0].toUpperCase() : p[0].charAt(0).toUpperCase(); })()
+  : (sireName ?? damName ?? '?').charAt(0).toUpperCase();
+
+type PillVariant = 'active' | 'for-sale' | 'stud' | 'retired' | 'frozen-semen' | 'available' | 'reserved' | 'male' | 'female' | 'current' | 'upcoming' | 'planned' | 'sold-out' | 'past';
+
+const statusVariantMap: Record<string, PillVariant> = {
+  Current: 'current',
+  Upcoming: 'upcoming',
+  Planned: 'planned',
+  'Sold Out': 'sold-out',
+  Past: 'past',
+  Unknown: 'past',
+};
+const pillVariant: PillVariant = statusVariantMap[status] ?? 'past';
+---
+
+<div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden border border-border">
+  <div class="flex flex-col sm:flex-row">
+    <!-- Image -->
+    <div class="relative sm:w-56 flex-shrink-0">
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={displayName}
+          class="w-full sm:w-56 h-48 sm:h-full object-cover"
+        />
+      ) : (
+        <div class="w-full sm:w-56 h-48 sm:h-full bg-stone-100 flex items-center justify-center text-muted-foreground text-sm min-h-[12rem]">
+          No photo
+        </div>
+      )}
+      <!-- Orange code badge -->
+      <div class="absolute top-3 left-3 w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow">
+        <span class="text-white font-bold text-sm">{code}</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col flex-1 p-5">
+      <div class="flex items-start gap-2 mb-2">
+        <h3 class="text-lg font-bold text-foreground leading-tight flex-1">{displayName}</h3>
+        <StatusPill variant={pillVariant} />
+      </div>
+
+      {(sireName || damName) && (
+        <p class="text-sm text-muted-foreground mb-2">
+          <span class="font-medium">{sireName ?? '?'}</span>
+          <span class="mx-1 text-muted-foreground/60">×</span>
+          <span class="font-medium">{damName ?? '?'}</span>
+        </p>
+      )}
+
+
+      {(maleCount !== null || femaleCount !== null) && (
+        <p class="text-xs text-muted-foreground mb-3">
+          {maleCount !== null && <span class="text-blue-600 font-medium">{maleCount}M</span>}
+          {maleCount !== null && femaleCount !== null && <span class="mx-1">/</span>}
+          {femaleCount !== null && <span class="text-pink-600 font-medium">{femaleCount}F</span>}
+        </p>
+      )}
+
+      {litter.expectedTraits && litter.expectedTraits.length > 0 && (
+        <div class="flex flex-wrap gap-1 mb-4">
+          {litter.expectedTraits.slice(0, 5).map(trait => (
+            <span class="text-xs px-2 py-0.5 bg-secondary rounded-full text-muted-foreground">{trait}</span>
+          ))}
+          {litter.expectedTraits.length > 5 && (
+            <span class="text-xs px-2 py-0.5 bg-secondary rounded-full text-muted-foreground">+{litter.expectedTraits.length - 5} more</span>
+          )}
+        </div>
+      )}
+
+      <div class="mt-auto flex flex-col sm:flex-row gap-2">
+        {hasDetailPage && (
+          <a
+            href={`/litters/${slug}`}
+            class="flex-1 text-center text-sm font-semibold bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            View Litter Details
+          </a>
+        )}
+        <a
+          href={`/contact`}
+          class="flex-1 text-center text-sm font-semibold border border-border text-foreground px-4 py-2 rounded-lg hover:bg-secondary transition-colors"
+        >
+          More Info
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
