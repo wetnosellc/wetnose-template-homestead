@@ -54,12 +54,18 @@ jobs:
 
       - run: npm ci
 
+      - name: Capture build time
+        id: buildmeta
+        run: echo "buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - name: Build Astro site
         env:
           WETNOSE_API_URL: ${{ env.API_URL }}
           WETNOSE_API_KEY: ${{ env.READONLY_KEY }}
           WETNOSE_KENNEL_ID: ${{ env.KENNEL_ID }}
           WETNOSE_SITE_ID: ${{ env.SITE_ID }}
+          WETNOSE_BUILD_ID: ${{ env.BUILD_ID }}
+          WETNOSE_BUILD_TIME: ${{ steps.buildmeta.outputs.buildTime }}
         run: npm run build
 
       - name: Deploy to Cloudflare Pages

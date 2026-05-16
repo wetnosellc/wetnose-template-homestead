@@ -21,6 +21,8 @@ const {
 
 const fullTitle = title.includes('Moro Shepherds') ? title : `${title} — Moro Shepherds`;
 const jsonLdArr = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const buildId = import.meta.env.WETNOSE_BUILD_ID ?? 'dev';
+const buildTime = import.meta.env.WETNOSE_BUILD_TIME ?? new Date().toISOString();
 
 let logoUrl: string | null = null;
 let kennelName = 'Moro Shepherds';
@@ -38,6 +40,8 @@ try {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <MetaTags title={fullTitle} description={description} ogImage={ogImage} ogType={ogType} />
+    <meta name="x-wetnose-build-id" content={buildId} />
+    <meta name="x-wetnose-build-time" content={buildTime} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oooh+Baby&display=swap" rel="stylesheet" />
