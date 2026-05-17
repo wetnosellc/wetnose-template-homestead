@@ -80,12 +80,14 @@ jobs:
         if: success() && env.WEBHOOK_URL != ''
         env:
           WEBHOOK_SECRET: ${{ secrets.WETNOSE_BUILD_WEBHOOK_SECRET }}
+          LOG_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           BODY=$(jq -nc \
             --arg buildId "$BUILD_ID" \
             --arg siteId "$SITE_ID" \
             --arg status "success" \
-            '{buildId:$buildId, siteId:$siteId, status:$status}')
+            --arg logUrl "$LOG_URL" \
+            '{buildId:$buildId, siteId:$siteId, status:$status, logUrl:$logUrl}')
           SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | awk '{print $2}')
           curl -fsS -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
@@ -96,13 +98,15 @@ jobs:
         if: failure() && env.WEBHOOK_URL != ''
         env:
           WEBHOOK_SECRET: ${{ secrets.WETNOSE_BUILD_WEBHOOK_SECRET }}
+          LOG_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           BODY=$(jq -nc \
             --arg buildId "$BUILD_ID" \
             --arg siteId "$SITE_ID" \
             --arg status "failed" \
             --arg error "GHA run ${{ github.run_id }} failed; see logs." \
-            '{buildId:$buildId, siteId:$siteId, status:$status, error:$error}')
+            --arg logUrl "$LOG_URL" \
+            '{buildId:$buildId, siteId:$siteId, status:$status, error:$error, logUrl:$logUrl}')
           SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | awk '{print $2}')
           curl -fsS -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
