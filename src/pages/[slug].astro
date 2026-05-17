@@ -58,11 +58,17 @@ function pickBool(key: string, fallback = false): boolean {
   const v = allValues[key];
   return typeof v === 'boolean' ? v : fallback;
 }
+function pickRepeater(key: string): Record<string, unknown>[] {
+  if (!(key in declaredSlots)) return [];
+  const v = allValues[key];
+  return Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
+}
 
 const heroImage = pickString('heroImage');
 const tagline = pickString('tagline'); // standard pages only
 const intro = pickString('intro'); // content pages only
 const showScreeningCta = pickBool('showScreeningCta');
+const gallery = pickRepeater('gallery'); // content pages only
 
 // Render body markdown to HTML. Empty bodies render as nothing.
 const bodyHtml = page.bodyMarkdown
@@ -99,6 +105,26 @@ const resolvedHero =
 
     {bodyHtml && (
       <div class="prose prose-stone max-w-none text-foreground" set:html={bodyHtml} />
+    )}
+
+    {gallery.length > 0 && (
+      <div class="mt-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {gallery.map((item) => {
+            const src = typeof item.image === 'string' ? item.image : null;
+            const caption = typeof item.caption === 'string' ? item.caption : '';
+            if (!src) return null;
+            return (
+              <figure class="overflow-hidden rounded-lg border border-border bg-white">
+                <img src={src} alt={caption} class="w-full aspect-square object-cover" loading="lazy" />
+                {caption && (
+                  <figcaption class="px-3 py-2 text-sm text-muted-foreground">{caption}</figcaption>
+                )}
+              </figure>
+            );
+          })}
+        </div>
+      </div>
     )}
 
     {showScreeningCta && (
