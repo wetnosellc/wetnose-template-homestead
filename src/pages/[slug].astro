@@ -24,7 +24,7 @@ export async function getStaticPaths() {
     eligible.map(async (stub) => {
       try {
         const page = await fetchSitePage(stub.slug);
-        return { params: { slug: stub.slug }, props: { page } };
+        return { params: { slug: stub.slug }, props: { page, manifest } };
       } catch (err) {
         console.warn(`[cms] failed to fetch page "${stub.slug}":`, err);
         return null;
@@ -35,30 +35,44 @@ export async function getStaticPaths() {
   return entries.filter((e): e is NonNullable<typeof e> => e !== null);
 }
 
-const { page } = Astro.props;
+const { page, manifest } = Astro.props;
 
-const slots = (page.slotValues ?? {}) as Record<string, unknown>;
-const str = (k: string): string | null => {
-  const v = slots[k];
+// Only render slots that the manifest declares for this page kind. This drops
+// any orphan slot values left behind from a previous page kind (e.g. tagline
+// set when the page was Standard, then switched to Content).
+const slotManifest = (manifest.template?.slotManifest ?? {}) as Record<string, unknown>;
+const pageKinds = (slotManifest.pageKinds ?? {}) as Record<
+  string,
+  { slots?: Record<string, { type?: string }> }
+>;
+const declaredSlots = pageKinds[page.pageKind]?.slots ?? {};
+const allValues = (page.slotValues ?? {}) as Record<string, unknown>;
+
+function pickString(key: string): string | null {
+  if (!(key in declaredSlots)) return null;
+  const v = allValues[key];
   return typeof v === 'string' && v.length > 0 ? v : null;
-};
-const bool = (k: string, fallback = false): boolean => {
-  const v = slots[k];
+}
+function pickBool(key: string, fallback = false): boolean {
+  if (!(key in declaredSlots)) return fallback;
+  const v = allValues[key];
   return typeof v === 'boolean' ? v : fallback;
-};
+}
 
-const heroImage = str('heroImage');
-const tagline = str('tagline');
-const showScreeningCta = bool('showScreeningCta');
+const heroImage = pickString('heroImage');
+const tagline = pickString('tagline'); // standard pages only
+const intro = pickString('intro'); // content pages only
+const showScreeningCta = pickBool('showScreeningCta');
 
 // Render body markdown to HTML. Empty bodies render as nothing.
 const bodyHtml = page.bodyMarkdown
   ? marked.parse(page.bodyMarkdown, { async: false, breaks: false })
   : '';
 
-// Pull kennel for fallback hero image / branding.
+// Pull kennel for fallback hero on content pages.
 const kennel = await fetchKennel().catch(() => null);
-const resolvedHero = heroImage ?? (page.pageKind === 'content' ? kennel?.coverPhotoUrl ?? null : null);
+const resolvedHero =
+  heroImage ?? (page.pageKind === 'content' ? kennel?.coverPhotoUrl ?? null : null);
 ---
 
 <Base title={page.title} description={tagline ?? undefined}>
@@ -77,6 +91,10 @@ const resolvedHero = heroImage ?? (page.pageKind === 'content' ? kennel?.coverPh
     <h1 class="text-4xl font-bold text-foreground mb-2">{page.title}</h1>
     {tagline && (
       <p class="text-lg text-muted-foreground mb-8">{tagline}</p>
+    )}
+
+    {intro && (
+      <p class="text-lg text-foreground/80 leading-relaxed mb-8 whitespace-pre-line">{intro}</p>
     )}
 
     {bodyHtml && (
