@@ -1,7 +1,8 @@
 ---
 import '@/styles/global.css';
 import MetaTags from '@/components/MetaTags.astro';
-import { fetchKennel } from '@/lib/wetnose';
+import { fetchKennel, fetchManifest } from '@/lib/wetnose';
+import type { SiteManifestPageStub } from '@/lib/template-kit';
 
 interface Props {
   title: string;
@@ -13,25 +14,49 @@ interface Props {
 
 const {
   title,
-  description = "Moro Shepherds — White Swiss Shepherd breeder",
+  description,
   ogImage,
   ogType = 'website',
   jsonLd,
 } = Astro.props;
 
-const fullTitle = title.includes('Moro Shepherds') ? title : `${title} — Moro Shepherds`;
-const jsonLdArr = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 const buildId = import.meta.env.WETNOSE_BUILD_ID ?? 'dev';
 const buildTime = import.meta.env.WETNOSE_BUILD_TIME ?? new Date().toISOString();
 
 let logoUrl: string | null = null;
-let kennelName = 'Moro Shepherds';
+let kennelName = 'Kennel';
+let cmsPages: SiteManifestPageStub[] = [];
 try {
-  const kennel = await fetchKennel();
+  const [kennel, manifest] = await Promise.all([
+    fetchKennel(),
+    fetchManifest(),
+  ]);
   logoUrl = kennel.logoUrl;
-  kennelName = kennel.name;
+  kennelName = kennel.name || kennelName;
+  cmsPages = manifest.pages;
 } catch (_) {
-  // fall back to text logo
+  // fall back to empty nav + text logo
+}
+
+const fullTitle = title.includes(kennelName) ? title : `${title} — ${kennelName}`;
+const resolvedDescription = description ?? `${kennelName} — kennel website`;
+const jsonLdArr = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+
+// Nav rendering: top-level CMS pages whose showInNav slot isn't false.
+// Children (parentId !== null) render as a dropdown under their parent.
+// Reserved slugs (owned by built-in template routes) are dropped so they don't
+// shadow the Dogs/Litters/Contact entries below.
+const reserved = new Set(['dogs', 'litters', 'contact', 'screening', '404']);
+const visiblePages = cmsPages.filter((p) => !reserved.has(p.slug));
+
+const roots = visiblePages.filter((p) => p.parentId === null);
+const childrenByParent = new Map<string, SiteManifestPageStub[]>();
+for (const p of visiblePages) {
+  if (p.parentId) {
+    const list = childrenByParent.get(p.parentId) ?? [];
+    list.push(p);
+    childrenByParent.set(p.parentId, list);
+  }
 }
 ---
 <!doctype html>
@@ -39,7 +64,7 @@ try {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <MetaTags title={fullTitle} description={description} ogImage={ogImage} ogType={ogType} />
+    <MetaTags title={fullTitle} description={resolvedDescription} ogImage={ogImage} ogType={ogType} />
     <meta name="x-wetnose-build-id" content={buildId} />
     <meta name="x-wetnose-build-time" content={buildTime} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -61,25 +86,36 @@ try {
 
           <!-- Desktop nav -->
           <nav class="hidden md:flex items-center gap-1">
-            <!-- About dropdown -->
-            <div class="relative group">
-              <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-secondary">
-                About
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div class="absolute left-0 top-full pt-1 w-52 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150">
-                <div class="bg-white border border-border rounded-lg shadow-lg py-1">
-                  <a href="/about/bio" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">About Us</a>
-                  <a href="/about/puppy-pricing" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Puppy Pricing</a>
-                  <a href="/about/contract-info" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Contract Info</a>
-                  <a href="/about/kennel-name-change" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Kennel Name Change</a>
+            {roots.map((p) => {
+              const kids = childrenByParent.get(p.id) ?? [];
+              if (kids.length === 0) {
+                return (
+                  <a href={`/${p.slug}`} class="px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-secondary">
+                    {p.title}
+                  </a>
+                );
+              }
+              return (
+                <div class="relative group">
+                  <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-secondary">
+                    {p.title}
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div class="absolute left-0 top-full pt-1 w-52 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150">
+                    <div class="bg-white border border-border rounded-lg shadow-lg py-1">
+                      <a href={`/${p.slug}`} class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">{p.title} overview</a>
+                      {kids.map((c) => (
+                        <a href={`/${c.slug}`} class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">{c.title}</a>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
 
-            <!-- Dogs dropdown -->
+            <!-- Dogs (built-in) -->
             <div class="relative group">
               <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-secondary">
                 Dogs
@@ -97,7 +133,7 @@ try {
               </div>
             </div>
 
-            <!-- Litters dropdown -->
+            <!-- Litters (built-in) -->
             <div class="relative group">
               <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-secondary">
                 Litters
@@ -111,24 +147,6 @@ try {
                   <a href="/litters#upcoming" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Upcoming</a>
                   <a href="/litters#planned" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Planned</a>
                   <a href="/litters#past" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Past</a>
-                </div>
-              </div>
-            </div>
-
-            <!-- Breed Info dropdown -->
-            <div class="relative group">
-              <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-secondary">
-                Breed Info
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div class="absolute left-0 top-full pt-1 w-48 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150">
-                <div class="bg-white border border-border rounded-lg shadow-lg py-1">
-                  <a href="/breed-info/fci-standard" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">FCI Breed Standard</a>
-                  <a href="/breed-info/shopping-list" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Shopping List</a>
-                  <a href="/breed-info/health-testing" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">Health and Health Testing</a>
-                  <a href="/breed-info/history" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">History of the White Swiss Shepherd</a>
                 </div>
               </div>
             </div>
@@ -154,19 +172,26 @@ try {
         </div>
       </div>
 
-      <!-- Tagline bar -->
-      <div class="bg-accent text-accent-foreground text-center py-2 px-4" style="font-family: 'Oooh Baby', cursive; letter-spacing: 0.13em; font-size: clamp(0.75rem, 2vw, 1.125rem);">
-        FCI White Swiss Shepherds of exceptional health, character, and beauty
-      </div>
-
       <!-- Mobile menu -->
       <div id="mobile-menu" class="hidden md:hidden border-t border-border bg-white">
         <div class="px-4 py-3 space-y-1">
-          <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-2 pb-1">About</p>
-          <a href="/about/bio" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">About Us</a>
-          <a href="/about/puppy-pricing" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Puppy Pricing</a>
-          <a href="/about/contract-info" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Contract Info</a>
-          <a href="/about/kennel-name-change" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Kennel Name Change</a>
+          {roots.map((p) => {
+            const kids = childrenByParent.get(p.id) ?? [];
+            if (kids.length === 0) {
+              return (
+                <a href={`/${p.slug}`} class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">{p.title}</a>
+              );
+            }
+            return (
+              <>
+                <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-2 pb-1">{p.title}</p>
+                <a href={`/${p.slug}`} class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">{p.title} overview</a>
+                {kids.map((c) => (
+                  <a href={`/${c.slug}`} class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">{c.title}</a>
+                ))}
+              </>
+            );
+          })}
 
           <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-3 pb-1">Dogs</p>
           <a href="/dogs#males" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Studs</a>
@@ -179,12 +204,6 @@ try {
           <a href="/litters#upcoming" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Upcoming</a>
           <a href="/litters#planned" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Planned</a>
           <a href="/litters#past" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Past</a>
-
-          <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-3 pb-1">Breed Info</p>
-          <a href="/breed-info/fci-standard" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">FCI Breed Standard</a>
-          <a href="/breed-info/shopping-list" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Shopping List</a>
-          <a href="/breed-info/health-testing" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Health and Health Testing</a>
-          <a href="/breed-info/history" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">History of the White Swiss Shepherd</a>
 
           <div class="pt-3 pb-2">
             <a href="/contact" class="block w-full text-center px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
@@ -203,43 +222,33 @@ try {
       <div class="mx-auto max-w-7xl px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
         <!-- Brand -->
         <div>
-          <p class="text-lg font-bold mb-3">Moro Shepherds</p>
-          <p class="text-sm text-accent-foreground/70 leading-relaxed">
-            Champion-bred White Swiss Shepherds raised with love in Oregon. FCI-registered, health-tested, family companions.
-          </p>
+          <p class="text-lg font-bold mb-3">{kennelName}</p>
+          <p class="text-sm text-accent-foreground/70 leading-relaxed">{resolvedDescription}</p>
         </div>
 
-        <!-- Quick Links -->
+        <!-- Quick Links — top-level CMS pages -->
         <div>
           <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Quick Links</p>
           <ul class="space-y-2 text-sm">
-            <li><a href="/about/bio" class="text-accent-foreground/80 hover:text-white transition-colors">About</a></li>
-            <li><a href="/dogs#males" class="text-accent-foreground/80 hover:text-white transition-colors">Males</a></li>
-            <li><a href="/dogs#females" class="text-accent-foreground/80 hover:text-white transition-colors">Females</a></li>
-            <li><a href="/dogs#for-sale" class="text-accent-foreground/80 hover:text-white transition-colors">Dogs For Sale</a></li>
-            <li><a href="/litters#current" class="text-accent-foreground/80 hover:text-white transition-colors">Current Litters</a></li>
-            <li><a href="/litters#upcoming" class="text-accent-foreground/80 hover:text-white transition-colors">Upcoming Litters</a></li>
-            <li><a href="/litters#planned" class="text-accent-foreground/80 hover:text-white transition-colors">Planned Litters</a></li>
-            <li><a href="/breed-info/fci-standard" class="text-accent-foreground/80 hover:text-white transition-colors">Breed Information</a></li>
+            {roots.map((p) => (
+              <li><a href={`/${p.slug}`} class="text-accent-foreground/80 hover:text-white transition-colors">{p.title}</a></li>
+            ))}
+            <li><a href="/dogs" class="text-accent-foreground/80 hover:text-white transition-colors">Dogs</a></li>
+            <li><a href="/litters" class="text-accent-foreground/80 hover:text-white transition-colors">Litters</a></li>
           </ul>
         </div>
 
-        <!-- Contact Info -->
+        <!-- Contact -->
         <div>
-          <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Contact Info</p>
+          <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Contact</p>
           <ul class="space-y-2 text-sm text-accent-foreground/80">
-            <li>
-              <a href="/contact" class="hover:text-white transition-colors">Contact Us</a>
-            </li>
-            <li>Oregon, USA</li>
-            <li>
-              <a href="/screening" class="hover:text-white transition-colors">Puppy Application</a>
-            </li>
+            <li><a href="/contact" class="hover:text-white transition-colors">Contact Us</a></li>
+            <li><a href="/screening" class="hover:text-white transition-colors">Puppy Application</a></li>
           </ul>
         </div>
       </div>
       <div class="border-t border-accent-foreground/20 py-4 text-center text-xs text-accent-foreground/50">
-        &copy; {new Date().getFullYear()} Moro Shepherds. All rights reserved.
+        &copy; {new Date().getFullYear()} {kennelName}. All rights reserved.
       </div>
     </footer>
 

@@ -1,0 +1,99 @@
+---
+import Base from '@/layouts/Base.astro';
+import { fetchManifest, fetchSitePage, fetchKennel } from '@/lib/wetnose';
+import { marked } from 'marked';
+
+export async function getStaticPaths() {
+  const manifest = await fetchManifest();
+  // Skip reserved template routes so a CMS page named "dogs" can't clobber the
+  // built-in dogs index. These slugs are owned by the template.
+  const reserved = new Set([
+    'dogs',
+    'litters',
+    'contact',
+    'screening',
+    '404',
+    '',
+  ]);
+
+  const eligible = manifest.pages.filter(
+    (p) => !reserved.has(p.slug) && p.pageKind !== 'special',
+  );
+
+  const entries = await Promise.all(
+    eligible.map(async (stub) => {
+      try {
+        const page = await fetchSitePage(stub.slug);
+        return { params: { slug: stub.slug }, props: { page } };
+      } catch (err) {
+        console.warn(`[cms] failed to fetch page "${stub.slug}":`, err);
+        return null;
+      }
+    }),
+  );
+
+  return entries.filter((e): e is NonNullable<typeof e> => e !== null);
+}
+
+const { page } = Astro.props;
+
+const slots = (page.slotValues ?? {}) as Record<string, unknown>;
+const str = (k: string): string | null => {
+  const v = slots[k];
+  return typeof v === 'string' && v.length > 0 ? v : null;
+};
+const bool = (k: string, fallback = false): boolean => {
+  const v = slots[k];
+  return typeof v === 'boolean' ? v : fallback;
+};
+
+const heroImage = str('heroImage');
+const tagline = str('tagline');
+const showScreeningCta = bool('showScreeningCta');
+
+// Render body markdown to HTML. Empty bodies render as nothing.
+const bodyHtml = page.bodyMarkdown
+  ? marked.parse(page.bodyMarkdown, { async: false, breaks: false })
+  : '';
+
+// Pull kennel for fallback hero image / branding.
+const kennel = await fetchKennel().catch(() => null);
+const resolvedHero = heroImage ?? (page.pageKind === 'content' ? kennel?.coverPhotoUrl ?? null : null);
+---
+
+<Base title={page.title} description={tagline ?? undefined}>
+  <div class="mx-auto max-w-3xl px-4 py-10">
+    <a href="/" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Home
+    </a>
+
+    {resolvedHero && (
+      <div class="w-full aspect-video rounded-xl overflow-hidden mb-8">
+        <img src={resolvedHero} alt={page.title} class="w-full h-full object-cover" />
+      </div>
+    )}
+
+    <h1 class="text-4xl font-bold text-foreground mb-2">{page.title}</h1>
+    {tagline && (
+      <p class="text-lg text-muted-foreground mb-8">{tagline}</p>
+    )}
+
+    {bodyHtml && (
+      <div class="prose prose-stone max-w-none text-foreground" set:html={bodyHtml} />
+    )}
+
+    {showScreeningCta && (
+      <div class="mt-12 bg-white border border-border rounded-xl p-8 text-center">
+        <h2 class="text-2xl font-bold text-foreground mb-3">Ready to Apply?</h2>
+        <p class="text-muted-foreground mb-6 max-w-xl mx-auto">
+          If you'd like to apply to reserve a puppy or purchase an adult that we have listed,
+          please fill out the following application.
+        </p>
+        <a href="/screening" class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+          Begin Screening Questionnaire
+        </a>
+      </div>
+    )}
+  </div>
+</Base>
