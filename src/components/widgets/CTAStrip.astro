@@ -11,7 +11,7 @@ const {
   body,
   ctaText,
   ctaUrl,
-  background = { kind: "color", value: "bg-primary" },
+  background = { kind: "color", value: "bg-accent" },
 } = widget.props as {
   headline: string;
   body?: string;
@@ -26,15 +26,15 @@ const bgClass = background.kind === "image"
 ---
 
 <section
-  class={`py-12 px-4 md:px-8 ${bgClass}`}
+  class={`py-16 px-4 md:px-8 ${bgClass} text-white rounded-2xl mx-4 md:mx-8 my-8`}
   style={background.kind === "image" ? `background-image: url(${background.value})` : undefined}
 >
   <div class="max-w-2xl mx-auto text-center">
-    <h2 class="text-3xl md:text-4xl font-bold mb-4">{headline}</h2>
-    {body && <p class="text-lg mb-6">{body}</p>}
+    <h2 class="text-4xl md:text-5xl font-serif font-bold mb-4">{headline}</h2>
+    {body && <p class="text-lg mb-8 opacity-90">{body}</p>}
     <a
       href={ctaUrl}
-      class="inline-block px-8 py-3 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition font-semibold"
+      class="inline-block px-8 py-3 bg-white text-accent rounded-xl hover:bg-white/90 transition font-semibold"
     >
       {ctaText}
     </a>

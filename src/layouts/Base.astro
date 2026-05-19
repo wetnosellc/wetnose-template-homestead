@@ -72,18 +72,18 @@ for (const p of visiblePages) {
     <meta name="x-wetnose-build-time" content={buildTime} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oooh+Baby&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     {jsonLdArr.map(ld => (
       <script is:inline type="application/ld+json" set:html={JSON.stringify(ld)} />
     ))}
   </head>
   <body class="min-h-screen flex flex-col">
-    <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-border">
+    <header class="sticky top-0 z-50 bg-card/80 backdrop-blur-sm shadow-sm border-b border-border">
       <div class="mx-auto max-w-7xl px-4">
         <div class="flex items-center justify-between py-2">
           <!-- Logo -->
-          <a href="/" class="hover:opacity-90 transition-opacity">
+          <a href="/" class="hover:opacity-80 transition-opacity">
             <img src={logoUrl ?? '/logo.webp'} alt={kennelName} class="h-20 w-auto object-contain" />
           </a>
 
@@ -219,40 +219,40 @@ for (const p of visiblePages) {
       <slot />
     </main>
 
-    <footer class="border-t border-border bg-accent text-accent-foreground mt-16">
+    <footer class="border-t border-border bg-primary/5 text-foreground mt-16">
       {footerWidgets.length > 0 ? (
         <FooterWidgetRenderer widgets={footerWidgets} />
       ) : (
         <div class="mx-auto max-w-7xl px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
           <!-- Brand -->
           <div>
-            <p class="text-lg font-bold mb-3">{kennelName}</p>
-            <p class="text-sm text-accent-foreground/70 leading-relaxed">{resolvedDescription}</p>
+            <p class="text-lg font-serif font-bold mb-3 text-primary">{kennelName}</p>
+            <p class="text-sm text-foreground/70 leading-relaxed">{resolvedDescription}</p>
           </div>
 
           <!-- Quick Links — top-level CMS pages -->
           <div>
-            <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Quick Links</p>
+            <p class="text-sm font-semibold uppercase tracking-wider text-primary/80 mb-4">Quick Links</p>
             <ul class="space-y-2 text-sm">
               {roots.map((p) => (
-                <li><a href={`/${p.slug}`} class="text-accent-foreground/80 hover:text-white transition-colors">{p.title}</a></li>
+                <li><a href={`/${p.slug}`} class="text-foreground/70 hover:text-primary transition-colors">{p.title}</a></li>
               ))}
-              <li><a href="/dogs" class="text-accent-foreground/80 hover:text-white transition-colors">Dogs</a></li>
-              <li><a href="/litters" class="text-accent-foreground/80 hover:text-white transition-colors">Litters</a></li>
+              <li><a href="/dogs" class="text-foreground/70 hover:text-primary transition-colors">Dogs</a></li>
+              <li><a href="/litters" class="text-foreground/70 hover:text-primary transition-colors">Litters</a></li>
             </ul>
           </div>
 
           <!-- Contact -->
           <div>
-            <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Contact</p>
-            <ul class="space-y-2 text-sm text-accent-foreground/80">
-              <li><a href="/contact" class="hover:text-white transition-colors">Contact Us</a></li>
-              <li><a href="/screening" class="hover:text-white transition-colors">Puppy Application</a></li>
+            <p class="text-sm font-semibold uppercase tracking-wider text-primary/80 mb-4">Contact</p>
+            <ul class="space-y-2 text-sm text-foreground/70">
+              <li><a href="/contact" class="hover:text-primary transition-colors">Contact Us</a></li>
+              <li><a href="/screening" class="hover:text-primary transition-colors">Puppy Application</a></li>
             </ul>
           </div>
         </div>
       )}
-      <div class="border-t border-accent-foreground/20 py-4 text-center text-xs text-accent-foreground/50">
+      <div class="border-t border-primary/10 py-4 text-center text-xs text-foreground/40">
         &copy; {new Date().getFullYear()} {kennelName}. All rights reserved.
       </div>
     </footer>

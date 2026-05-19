@@ -36,29 +36,29 @@ const dogs = response.items || [];
 {
   dogs.length === 0 ? (
     <section class="py-12 px-4 md:px-8">
-      <div class="text-center text-gray-500">No dogs to display.</div>
+      <div class="text-center text-muted-foreground">No dogs to display.</div>
     </section>
   ) : layout === "list" ? (
     <section class="py-12 px-4 md:px-8">
       <div class="max-w-3xl mx-auto space-y-4">
         {dogs.map((dog) => (
-          <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+          <div class="border border-border rounded-2xl p-4 hover:shadow-md transition-shadow bg-card">
             <div class="flex gap-4">
               {dog.thumbnailPhotoUrl && (
                 <img
                   src={dog.thumbnailPhotoUrl}
                   alt={dog.callName || dog.registeredName}
-                  class="w-24 h-24 object-cover rounded"
+                  class="w-24 h-24 object-cover rounded-xl"
                 />
               )}
               <div class="flex-1">
-                <h3 class="text-lg font-semibold">
+                <h3 class="text-lg font-serif font-semibold text-primary">
                   {dog.callName || dog.registeredName}
                 </h3>
                 {dog.description && (
-                  <p class="text-sm text-gray-600 mt-1">{dog.description}</p>
+                  <p class="text-sm text-foreground/70 mt-1">{dog.description}</p>
                 )}
-                {dog.status && <p class="text-xs text-gray-500 mt-2">{dog.status}</p>}
+                {dog.status && <p class="text-xs text-muted-foreground mt-2">{dog.status}</p>}
               </div>
             </div>
           </div>
@@ -69,7 +69,7 @@ const dogs = response.items || [];
     <section class="py-12 px-4 md:px-8">
       <div class={`grid gap-6 ${layout === "grid" ? "md:grid-cols-3 lg:grid-cols-4" : "md:grid-cols-2"}`}>
         {dogs.map((dog) => (
-          <div class="rounded-lg overflow-hidden border hover:shadow-lg transition-shadow">
+          <div class="rounded-2xl overflow-hidden border border-border hover:shadow-lg transition-shadow bg-card">
             {dog.thumbnailPhotoUrl && (
               <img
                 src={dog.thumbnailPhotoUrl}
@@ -77,12 +77,12 @@ const dogs = response.items || [];
                 class="w-full aspect-square object-cover"
               />
             )}
-            <div class="p-3">
-              <h3 class="font-semibold text-sm line-clamp-2">
+            <div class="p-4">
+              <h3 class="font-serif font-semibold text-primary line-clamp-2">
                 {dog.callName || dog.registeredName}
               </h3>
               {dog.status && (
-                <p class="text-xs text-gray-500 mt-1">{dog.status}</p>
+                <p class="text-xs text-muted-foreground mt-2">{dog.status}</p>
               )}
             </div>
           </div>
