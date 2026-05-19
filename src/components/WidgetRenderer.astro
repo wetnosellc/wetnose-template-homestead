@@ -1,0 +1,34 @@
+---
+import type { WidgetInstance } from "@wetnose/shared";
+import Hero from "./widgets/Hero.astro";
+import RichText from "./widgets/RichText.astro";
+import ImageGallery from "./widgets/ImageGallery.astro";
+import TestimonialCarousel from "./widgets/TestimonialCarousel.astro";
+import FAQ from "./widgets/FAQ.astro";
+import CTAStrip from "./widgets/CTAStrip.astro";
+
+interface Props {
+  widgets: WidgetInstance[];
+}
+
+const { widgets } = Astro.props;
+
+const widgetComponents: Record<string, any> = {
+  hero: Hero,
+  richtext: RichText,
+  "image-gallery": ImageGallery,
+  "testimonial-carousel": TestimonialCarousel,
+  faq: FAQ,
+  "cta-strip": CTAStrip,
+};
+---
+
+{
+  widgets.map((widget) => {
+    const Component = widgetComponents[widget.type];
+    if (!Component) {
+      return <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">Unknown widget type: {widget.type}</div>;
+    }
+    return <Component widget={widget} />;
+  })
+}

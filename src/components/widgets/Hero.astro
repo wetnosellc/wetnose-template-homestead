@@ -1,0 +1,52 @@
+---
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const {
+  image,
+  headline,
+  subheadline,
+  ctaText,
+  ctaUrl,
+  layout = "full-bleed",
+} = widget.props as {
+  image?: string;
+  headline: string;
+  subheadline?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  layout?: string;
+};
+
+const layoutClass = {
+  "full-bleed": "flex flex-col items-center justify-center",
+  "split-image-right": "flex flex-col-reverse md:flex-row items-center gap-8",
+  "split-image-left": "flex flex-col md:flex-row items-center gap-8",
+}[layout] || "flex flex-col items-center justify-center";
+---
+
+<section class={`py-16 px-4 md:px-8 ${layoutClass}`}>
+  {image && (
+    <img
+      src={image}
+      alt={headline}
+      class="w-full md:w-1/2 rounded-lg object-cover"
+    />
+  )}
+  <div class="flex-1 space-y-4 text-center md:text-left">
+    <h1 class="text-4xl md:text-5xl font-bold">{headline}</h1>
+    {subheadline && <p class="text-lg text-muted-foreground">{subheadline}</p>}
+    {ctaText && ctaUrl && (
+      <a
+        href={ctaUrl}
+        class="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition"
+      >
+        {ctaText}
+      </a>
+    )}
+  </div>
+</section>

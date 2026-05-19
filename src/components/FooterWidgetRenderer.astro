@@ -1,0 +1,27 @@
+---
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widgets: WidgetInstance[];
+}
+
+const { widgets } = Astro.props;
+
+const widgetComponents: Record<string, any> = {
+  "social-links": null,
+  "contact-info": null,
+  "nav-links": null,
+  richtext: null,
+  "tagline-strip": null,
+};
+---
+
+{
+  widgets.map((widget) => {
+    const Component = widgetComponents[widget.type];
+    if (!Component) {
+      return <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">Unknown footer widget type: {widget.type}</div>;
+    }
+    return <Component widget={widget} />;
+  })
+}

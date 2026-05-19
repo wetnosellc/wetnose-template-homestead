@@ -1,0 +1,44 @@
+---
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const {
+  items = [],
+  autoplay = false,
+} = widget.props as {
+  items?: { quote: string; attribution: string; image?: string }[];
+  autoplay?: boolean;
+};
+---
+
+<section class="py-12 px-4 md:px-8">
+  <div
+    class="relative max-w-3xl mx-auto"
+    data-autoplay={autoplay}
+  >
+    <div class="grid gap-8">
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          class="flex flex-col md:flex-row gap-6 items-center p-6 bg-muted rounded-lg"
+        >
+          {item.image && (
+            <img
+              src={item.image}
+              alt={item.attribution}
+              class="w-24 h-24 rounded-full object-cover flex-shrink-0"
+            />
+          )}
+          <div class="flex-1">
+            <blockquote class="text-lg italic mb-4">"{item.quote}"</blockquote>
+            <p class="font-semibold">— {item.attribution}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,41 @@
+---
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const {
+  items = [],
+  layout = "grid",
+  columns = 3,
+} = widget.props as {
+  items?: { image: string; caption?: string }[];
+  layout?: string;
+  columns?: number;
+};
+
+const gridClass = layout === "carousel"
+  ? "flex overflow-x-auto gap-4 pb-4"
+  : `grid grid-cols-1 md:grid-cols-${columns} gap-4`;
+---
+
+<section class="py-12 px-4 md:px-8">
+  <div class={gridClass}>
+    {items.map((item) => (
+      <figure class={layout === "carousel" ? "flex-shrink-0 w-72" : ""}>
+        <img
+          src={item.image}
+          alt={item.caption || "Gallery image"}
+          class="w-full h-64 object-cover rounded-lg"
+        />
+        {item.caption && (
+          <figcaption class="mt-2 text-sm text-muted-foreground text-center">
+            {item.caption}
+          </figcaption>
+        )}
+      </figure>
+    ))}
+  </div>
+</section>

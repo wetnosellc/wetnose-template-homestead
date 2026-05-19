@@ -1,0 +1,42 @@
+---
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const {
+  headline,
+  body,
+  ctaText,
+  ctaUrl,
+  background = { kind: "color", value: "bg-primary" },
+} = widget.props as {
+  headline: string;
+  body?: string;
+  ctaText: string;
+  ctaUrl: string;
+  background?: { kind: "color" | "image"; value: string };
+};
+
+const bgClass = background.kind === "image"
+  ? `bg-cover bg-center`
+  : background.value;
+---
+
+<section
+  class={`py-12 px-4 md:px-8 ${bgClass}`}
+  style={background.kind === "image" ? `background-image: url(${background.value})` : undefined}
+>
+  <div class="max-w-2xl mx-auto text-center">
+    <h2 class="text-3xl md:text-4xl font-bold mb-4">{headline}</h2>
+    {body && <p class="text-lg mb-6">{body}</p>}
+    <a
+      href={ctaUrl}
+      class="inline-block px-8 py-3 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition font-semibold"
+    >
+      {ctaText}
+    </a>
+  </div>
+</section>

@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css';
 import MetaTags from '@/components/MetaTags.astro';
+import FooterWidgetRenderer from '@/components/FooterWidgetRenderer.astro';
 import { fetchKennel, fetchManifest } from '@/lib/wetnose';
 import type { SiteManifestPageStub } from '@/lib/template-kit';
 
@@ -26,6 +27,7 @@ const buildTime = import.meta.env.WETNOSE_BUILD_TIME ?? new Date().toISOString()
 let logoUrl: string | null = null;
 let kennelName = 'Kennel';
 let cmsPages: SiteManifestPageStub[] = [];
+let footerWidgets: any[] = [];
 try {
   const [kennel, manifest] = await Promise.all([
     fetchKennel(),
@@ -34,6 +36,7 @@ try {
   logoUrl = kennel.logoUrl;
   kennelName = kennel.name || kennelName;
   cmsPages = manifest.pages;
+  footerWidgets = manifest.site?.footerWidgets ?? [];
 } catch (_) {
   // fall back to empty nav + text logo
 }
@@ -217,34 +220,38 @@ for (const p of visiblePages) {
     </main>
 
     <footer class="border-t border-border bg-accent text-accent-foreground mt-16">
-      <div class="mx-auto max-w-7xl px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
-        <!-- Brand -->
-        <div>
-          <p class="text-lg font-bold mb-3">{kennelName}</p>
-          <p class="text-sm text-accent-foreground/70 leading-relaxed">{resolvedDescription}</p>
-        </div>
+      {footerWidgets.length > 0 ? (
+        <FooterWidgetRenderer widgets={footerWidgets} />
+      ) : (
+        <div class="mx-auto max-w-7xl px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
+          <!-- Brand -->
+          <div>
+            <p class="text-lg font-bold mb-3">{kennelName}</p>
+            <p class="text-sm text-accent-foreground/70 leading-relaxed">{resolvedDescription}</p>
+          </div>
 
-        <!-- Quick Links — top-level CMS pages -->
-        <div>
-          <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Quick Links</p>
-          <ul class="space-y-2 text-sm">
-            {roots.map((p) => (
-              <li><a href={`/${p.slug}`} class="text-accent-foreground/80 hover:text-white transition-colors">{p.title}</a></li>
-            ))}
-            <li><a href="/dogs" class="text-accent-foreground/80 hover:text-white transition-colors">Dogs</a></li>
-            <li><a href="/litters" class="text-accent-foreground/80 hover:text-white transition-colors">Litters</a></li>
-          </ul>
-        </div>
+          <!-- Quick Links — top-level CMS pages -->
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Quick Links</p>
+            <ul class="space-y-2 text-sm">
+              {roots.map((p) => (
+                <li><a href={`/${p.slug}`} class="text-accent-foreground/80 hover:text-white transition-colors">{p.title}</a></li>
+              ))}
+              <li><a href="/dogs" class="text-accent-foreground/80 hover:text-white transition-colors">Dogs</a></li>
+              <li><a href="/litters" class="text-accent-foreground/80 hover:text-white transition-colors">Litters</a></li>
+            </ul>
+          </div>
 
-        <!-- Contact -->
-        <div>
-          <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Contact</p>
-          <ul class="space-y-2 text-sm text-accent-foreground/80">
-            <li><a href="/contact" class="hover:text-white transition-colors">Contact Us</a></li>
-            <li><a href="/screening" class="hover:text-white transition-colors">Puppy Application</a></li>
-          </ul>
+          <!-- Contact -->
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wider text-accent-foreground/60 mb-4">Contact</p>
+            <ul class="space-y-2 text-sm text-accent-foreground/80">
+              <li><a href="/contact" class="hover:text-white transition-colors">Contact Us</a></li>
+              <li><a href="/screening" class="hover:text-white transition-colors">Puppy Application</a></li>
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
       <div class="border-t border-accent-foreground/20 py-4 text-center text-xs text-accent-foreground/50">
         &copy; {new Date().getFullYear()} {kennelName}. All rights reserved.
       </div>
