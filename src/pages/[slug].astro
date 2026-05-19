@@ -1,7 +1,7 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { fetchManifest, fetchSitePage, fetchKennel } from '@/lib/wetnose';
-import { marked } from 'marked';
+import WidgetRenderer from '@/components/WidgetRenderer.astro';
+import { fetchManifest, fetchSitePage } from '@/lib/wetnose';
 
 export async function getStaticPaths() {
   const manifest = await fetchManifest();
@@ -24,7 +24,7 @@ export async function getStaticPaths() {
     eligible.map(async (stub) => {
       try {
         const page = await fetchSitePage(stub.slug);
-        return { params: { slug: stub.slug }, props: { page, manifest } };
+        return { params: { slug: stub.slug }, props: { page } };
       } catch (err) {
         console.warn(`[cms] failed to fetch page "${stub.slug}":`, err);
         return null;
@@ -35,109 +35,14 @@ export async function getStaticPaths() {
   return entries.filter((e): e is NonNullable<typeof e> => e !== null);
 }
 
-const { page, manifest } = Astro.props;
-
-// Only render slots that the manifest declares for this page kind. This drops
-// any orphan slot values left behind from a previous page kind (e.g. tagline
-// set when the page was Standard, then switched to Content).
-const slotManifest = (manifest.template?.slotManifest ?? {}) as Record<string, unknown>;
-const pageKinds = (slotManifest.pageKinds ?? {}) as Record<
-  string,
-  { slots?: Record<string, { type?: string }> }
->;
-const declaredSlots = pageKinds[page.pageKind]?.slots ?? {};
-const allValues = (page.slotValues ?? {}) as Record<string, unknown>;
-
-function pickString(key: string): string | null {
-  if (!(key in declaredSlots)) return null;
-  const v = allValues[key];
-  return typeof v === 'string' && v.length > 0 ? v : null;
-}
-function pickBool(key: string, fallback = false): boolean {
-  if (!(key in declaredSlots)) return fallback;
-  const v = allValues[key];
-  return typeof v === 'boolean' ? v : fallback;
-}
-function pickRepeater(key: string): Record<string, unknown>[] {
-  if (!(key in declaredSlots)) return [];
-  const v = allValues[key];
-  return Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
-}
-
-const heroImage = pickString('heroImage');
-const tagline = pickString('tagline'); // standard pages only
-const intro = pickString('intro'); // content pages only
-const showScreeningCta = pickBool('showScreeningCta');
-const gallery = pickRepeater('gallery'); // content pages only
-
-// Render body markdown to HTML. Empty bodies render as nothing.
-const bodyHtml = page.bodyMarkdown
-  ? marked.parse(page.bodyMarkdown, { async: false, breaks: false })
-  : '';
-
-// Pull kennel for fallback hero on content pages.
-const kennel = await fetchKennel().catch(() => null);
-const resolvedHero =
-  heroImage ?? (page.pageKind === 'content' ? kennel?.coverPhotoUrl ?? null : null);
+const { page } = Astro.props;
 ---
 
-<Base title={page.title} description={tagline ?? undefined}>
-  <div class="mx-auto max-w-3xl px-4 py-10">
-    <a href="/" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      Home
-    </a>
-
-    {resolvedHero && (
-      <div class="w-full aspect-video rounded-xl overflow-hidden mb-8">
-        <img src={resolvedHero} alt={page.title} class="w-full h-full object-cover" />
-      </div>
-    )}
-
-    <h1 class="text-4xl font-bold text-foreground mb-2">{page.title}</h1>
-    {tagline && (
-      <p class="text-lg text-muted-foreground mb-8">{tagline}</p>
-    )}
-
-    {intro && (
-      <p class="text-lg text-foreground/80 leading-relaxed mb-8 whitespace-pre-line">{intro}</p>
-    )}
-
-    {bodyHtml && (
-      <div class="prose prose-stone max-w-none text-foreground" set:html={bodyHtml} />
-    )}
-
-    {gallery.length > 0 && (
-      <div class="mt-12">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {gallery.map((item) => {
-            const src = typeof item.image === 'string' ? item.image : null;
-            const caption = typeof item.caption === 'string' ? item.caption : '';
-            if (!src) return null;
-            return (
-              <figure class="overflow-hidden rounded-lg border border-border bg-white">
-                <img src={src} alt={caption} class="w-full aspect-square object-cover" loading="lazy" />
-                {caption && (
-                  <figcaption class="px-3 py-2 text-sm text-muted-foreground">{caption}</figcaption>
-                )}
-              </figure>
-            );
-          })}
-        </div>
-      </div>
-    )}
-
-    {showScreeningCta && (
-      <div class="mt-12 bg-white border border-border rounded-xl p-8 text-center">
-        <h2 class="text-2xl font-bold text-foreground mb-3">Ready to Apply?</h2>
-        <p class="text-muted-foreground mb-6 max-w-xl mx-auto">
-          If you'd like to apply to reserve a puppy or purchase an adult that we have listed,
-          please fill out the following application.
-        </p>
-        <a href="/screening" class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
-          Begin Screening Questionnaire
-        </a>
-      </div>
-    )}
+<Base title={page.title}>
+  <div class="bg-white">
+    <div class="max-w-5xl mx-auto px-4 py-6 md:py-8">
+      <h1 class="text-4xl font-bold text-gray-900">{page.title}</h1>
+    </div>
   </div>
+  <WidgetRenderer widgets={page.widgets ?? []} />
 </Base>
