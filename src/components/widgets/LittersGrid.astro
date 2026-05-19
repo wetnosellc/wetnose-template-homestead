@@ -1,0 +1,78 @@
+---
+import { fetchLitters } from "../../lib/wetnose";
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const { filter = "current", limit = 6 } = widget.props as {
+  filter?: "current" | "past" | "all";
+  limit?: number;
+};
+
+// Map widget filter to birth date logic
+let params: Record<string, string> = {
+  limit: String(limit),
+};
+
+if (filter === "current") {
+  // Litters with no birthDate or future birthDates
+  params.status = "Planned,Bred,Confirmed,Whelped";
+} else if (filter === "past") {
+  // Litters with past birthDates
+  params.status = "Whelped";
+  params.sortBy = "birthDate";
+  params.sortOrder = "desc";
+}
+
+const response = await fetchLitters(params);
+const litters = response.items || [];
+---
+
+{
+  litters.length === 0 ? (
+    <section class="py-12 px-4 md:px-8">
+      <div class="text-center text-gray-500">No litters to display.</div>
+    </section>
+  ) : (
+    <section class="py-12 px-4 md:px-8">
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {litters.map((litter) => (
+          <div class="rounded-lg overflow-hidden border hover:shadow-lg transition-shadow">
+            {litter.thumbnailPhotoUrl && (
+              <img
+                src={litter.thumbnailPhotoUrl}
+                alt={litter.litterName || "Litter"}
+                class="w-full aspect-square object-cover"
+              />
+            )}
+            <div class="p-4">
+              <h3 class="font-semibold text-sm line-clamp-2">
+                {litter.litterName || "Litter"}
+              </h3>
+              {litter.sire && litter.dam && (
+                <p class="text-xs text-gray-600 mt-2">
+                  {litter.sire.callName || litter.sire.registeredName} ×{" "}
+                  {litter.dam.callName || litter.dam.registeredName}
+                </p>
+              )}
+              {litter.birthDate && (
+                <p class="text-xs text-gray-500 mt-2">
+                  Born {new Date(litter.birthDate).toLocaleDateString()}
+                </p>
+              )}
+              {litter.puppies && litter.puppies.length > 0 && (
+                <p class="text-xs text-gray-500 mt-2">
+                  {litter.puppies.length} puppet
+                  {litter.puppies.length === 1 ? "" : "s"}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}

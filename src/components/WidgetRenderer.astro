@@ -6,6 +6,10 @@ import ImageGallery from "./widgets/ImageGallery.astro";
 import TestimonialCarousel from "./widgets/TestimonialCarousel.astro";
 import FAQ from "./widgets/FAQ.astro";
 import CTAStrip from "./widgets/CTAStrip.astro";
+import DogsGrid from "./widgets/DogsGrid.astro";
+import LittersGrid from "./widgets/LittersGrid.astro";
+import ContactForm from "./widgets/ContactForm.astro";
+import PuppyApplicationForm from "./widgets/PuppyApplicationForm.astro";
 
 interface Props {
   widgets: WidgetInstance[];
@@ -20,6 +24,10 @@ const widgetComponents: Record<string, any> = {
   "testimonial-carousel": TestimonialCarousel,
   faq: FAQ,
   "cta-strip": CTAStrip,
+  "dogs-grid": DogsGrid,
+  "litters-grid": LittersGrid,
+  "contact-form": ContactForm,
+  "puppy-application-form": PuppyApplicationForm,
 };
 ---
 

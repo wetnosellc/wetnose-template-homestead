@@ -1,0 +1,49 @@
+---
+import { KENNEL_ID } from "../../lib/wetnose";
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const { mode = "embed", introText = "Apply for a puppy", ctaLabel = "Apply Now" } = widget.props as {
+  mode?: "embed" | "link";
+  introText?: string;
+  ctaLabel?: string;
+};
+
+const applyUrl = mode === "embed" ? `/embed/apply/${KENNEL_ID}` : `/apply/${KENNEL_ID}`;
+---
+
+{
+  mode === "link" ? (
+    <section class="py-12 px-4 md:px-8">
+      <div class="max-w-3xl mx-auto text-center">
+        {introText && <p class="mb-6 text-gray-700">{introText}</p>}
+        <a
+          href={applyUrl}
+          class="inline-block rounded-md bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
+        >
+          {ctaLabel}
+        </a>
+      </div>
+    </section>
+  ) : (
+    <section class="py-12 px-4 md:px-8">
+      <div class="max-w-3xl mx-auto">
+        {introText && (
+          <p class="mb-8 text-center text-gray-700">{introText}</p>
+        )}
+        <iframe
+          src={applyUrl}
+          title="Puppy Application Form"
+          class="w-full border-0 rounded-lg overflow-hidden"
+          style={{
+            minHeight: "600px",
+          }}
+        />
+      </div>
+    </section>
+  )
+}
