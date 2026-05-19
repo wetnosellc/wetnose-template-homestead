@@ -1,0 +1,19 @@
+---
+import { marked } from "marked";
+import type { WidgetInstance } from "@wetnose/shared";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const { markdown = "" } = widget.props as { markdown?: string };
+
+console.log(`[RichText] widget.type=${widget.type}, markdown length=${markdown.length}, markdown="${markdown.substring(0, 50)}..."`);
+
+const html = await marked(markdown);
+---
+
+<section class="py-12 px-4 md:px-8">
+  <div class="prose prose-sm md:prose max-w-3xl mx-auto" set:html={html} />
+</section>
