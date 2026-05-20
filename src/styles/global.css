@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./palette.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -30,6 +29,8 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces", ui-serif, serif;
 }
+
+@import "./palette.css";
 
 @layer base {
   *, *::before, *::after {
