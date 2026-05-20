@@ -17,10 +17,20 @@ const html = await marked(markdown);
 <section class="py-16 px-4 md:px-8">
   <style>
     :global(.richtext-content) h1 {
-      @apply text-4xl md:text-5xl font-serif font-bold text-primary mt-8 mb-4;
+      @apply text-4xl font-serif font-bold text-primary mt-8 mb-4;
+    }
+    @screen md {
+      :global(.richtext-content) h1 {
+        @apply text-5xl;
+      }
     }
     :global(.richtext-content) h2 {
-      @apply text-3xl md:text-4xl font-serif font-bold text-primary mt-8 mb-4;
+      @apply text-3xl font-serif font-bold text-primary mt-8 mb-4;
+    }
+    @screen md {
+      :global(.richtext-content) h2 {
+        @apply text-4xl;
+      }
     }
     :global(.richtext-content) h3 {
       @apply text-2xl font-serif font-bold text-primary mt-6 mb-3;
