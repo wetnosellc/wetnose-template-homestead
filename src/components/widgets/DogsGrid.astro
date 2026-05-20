@@ -39,52 +39,57 @@ const dogs = response.items || [];
       <div class="text-center text-muted-foreground">No dogs to display.</div>
     </section>
   ) : layout === "list" ? (
-    <section class="py-12 px-4 md:px-8">
-      <div class="max-w-3xl mx-auto space-y-4">
+    <section class="py-16 px-4 md:px-8">
+      <div class="max-w-4xl mx-auto space-y-8">
         {dogs.map((dog) => (
-          <div class="border border-border rounded-2xl p-4 hover:shadow-md transition-shadow bg-card">
-            <div class="flex gap-4">
-              {dog.thumbnailPhotoUrl && (
+          <div class="flex gap-8 pb-8 border-b border-border/50 last:border-b-0">
+            {dog.thumbnailPhotoUrl && (
+              <div class="flex-shrink-0 w-32 h-40 rounded-2xl overflow-hidden">
                 <img
                   src={dog.thumbnailPhotoUrl}
                   alt={dog.callName || dog.registeredName}
-                  class="w-24 h-24 object-cover rounded-xl"
+                  class="w-full h-full object-cover"
                 />
-              )}
-              <div class="flex-1">
-                <h3 class="text-lg font-serif font-semibold text-primary">
-                  {dog.callName || dog.registeredName}
-                </h3>
-                {dog.description && (
-                  <p class="text-sm text-foreground/70 mt-1">{dog.description}</p>
-                )}
-                {dog.status && <p class="text-xs text-muted-foreground mt-2">{dog.status}</p>}
               </div>
+            )}
+            <div class="flex-1">
+              <h3 class="text-2xl font-serif font-bold text-primary mb-1">
+                {dog.callName || dog.registeredName}
+              </h3>
+              {dog.status && (
+                <p class="text-sm font-medium text-accent mb-3">{dog.status}</p>
+              )}
+              {dog.description && (
+                <p class="text-base text-foreground/70 leading-relaxed">{dog.description}</p>
+              )}
             </div>
           </div>
         ))}
       </div>
     </section>
   ) : (
-    <section class="py-12 px-4 md:px-8">
-      <div class={`grid gap-6 ${layout === "grid" ? "md:grid-cols-3 lg:grid-cols-4" : "md:grid-cols-2"}`}>
+    <section class="py-16 px-4 md:px-8">
+      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {dogs.map((dog) => (
-          <div class="rounded-2xl overflow-hidden border border-border hover:shadow-lg transition-shadow bg-card">
+          <div class="flex flex-col overflow-hidden">
             {dog.thumbnailPhotoUrl && (
-              <img
-                src={dog.thumbnailPhotoUrl}
-                alt={dog.callName || dog.registeredName}
-                class="w-full aspect-square object-cover"
-              />
+              <div class="aspect-[3/4] overflow-hidden rounded-2xl mb-4">
+                <img
+                  src={dog.thumbnailPhotoUrl}
+                  alt={dog.callName || dog.registeredName}
+                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
             )}
-            <div class="p-4">
-              <h3 class="font-serif font-semibold text-primary line-clamp-2">
-                {dog.callName || dog.registeredName}
-              </h3>
-              {dog.status && (
-                <p class="text-xs text-muted-foreground mt-2">{dog.status}</p>
-              )}
-            </div>
+            <h3 class="text-lg font-serif font-bold text-primary mb-1">
+              {dog.callName || dog.registeredName}
+            </h3>
+            {dog.status && (
+              <p class="text-sm text-accent font-medium mb-2">{dog.status}</p>
+            )}
+            {dog.description && (
+              <p class="text-sm text-foreground/60 line-clamp-2">{dog.description}</p>
+            )}
           </div>
         ))}
       </div>

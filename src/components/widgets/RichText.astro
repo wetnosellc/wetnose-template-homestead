@@ -14,6 +14,32 @@ console.log(`[RichText] widget.type=${widget.type}, markdown length=${markdown.l
 const html = await marked(markdown);
 ---
 
-<section class="py-12 px-4 md:px-8">
-  <div class="prose prose-sm md:prose max-w-3xl mx-auto" set:html={html} />
+<section class="py-16 px-4 md:px-8">
+  <style>
+    :global(.richtext-content) h1 {
+      @apply text-4xl md:text-5xl font-serif font-bold text-primary mt-8 mb-4;
+    }
+    :global(.richtext-content) h2 {
+      @apply text-3xl md:text-4xl font-serif font-bold text-primary mt-8 mb-4;
+    }
+    :global(.richtext-content) h3 {
+      @apply text-2xl font-serif font-bold text-primary mt-6 mb-3;
+    }
+    :global(.richtext-content) p {
+      @apply text-base leading-relaxed text-foreground/80 mb-4;
+    }
+    :global(.richtext-content) ul, :global(.richtext-content) ol {
+      @apply ml-6 mb-4 space-y-2;
+    }
+    :global(.richtext-content) li {
+      @apply text-base text-foreground/80;
+    }
+    :global(.richtext-content) a {
+      @apply text-primary hover:underline transition-colors;
+    }
+    :global(.richtext-content) blockquote {
+      @apply border-l-4 border-primary/30 pl-4 py-2 italic text-foreground/70 mb-4;
+    }
+  </style>
+  <div class="richtext-content max-w-2xl mx-auto" set:html={html} />
 </section>
