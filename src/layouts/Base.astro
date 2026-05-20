@@ -48,6 +48,14 @@ const jsonLdArr = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 const reserved = new Set(['dogs', 'litters', 'contact', 'screening', '404']);
 const visiblePages = cmsPages.filter((p) => !reserved.has(p.slug));
 const roots = visiblePages.filter((p) => p.parentId === null);
+const childrenByParent = new Map<string, SiteManifestPageStub[]>();
+for (const p of visiblePages) {
+  if (p.parentId) {
+    const list = childrenByParent.get(p.parentId) ?? [];
+    list.push(p);
+    childrenByParent.set(p.parentId, list);
+  }
+}
 ---
 <!doctype html>
 <html lang="en">
@@ -79,15 +87,40 @@ const roots = visiblePages.filter((p) => p.parentId === null);
       </div>
 
       <!-- Thin nav row -->
-      <nav class="flex justify-center items-center gap-1 py-3 px-4 border-t border-stone-200/60 flex-wrap">
-        {roots.map((p) => (
-          <>
-            <a href={`/${p.slug}`} class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors">
-              {p.title}
-            </a>
-            <span class="text-foreground/30 mx-1">·</span>
-          </>
-        ))}
+      <nav class="flex justify-center items-center gap-1 py-3 px-4 border-t border-stone-200/60 flex-wrap relative">
+        {roots.map((p, idx) => {
+          const kids = childrenByParent.get(p.id) ?? [];
+          return (
+            <>
+              {kids.length > 0 ? (
+                <div class="relative group">
+                  <button class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors flex items-center gap-1">
+                    {p.title}
+                    <svg class="w-3 h-3 group-hover:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div class="absolute left-0 top-full pt-1 w-40 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150 z-10">
+                    <div class="bg-background border border-stone-200/60 rounded shadow-lg py-2">
+                      {kids.map((c) => (
+                        <a href={`/${c.slug}`} class="block px-4 py-2 text-sm text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors">
+                          {c.title}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <a href={`/${p.slug}`} class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors">
+                  {p.title}
+                </a>
+              )}
+              {idx < roots.length - 1 && <span class="text-foreground/30 mx-1">·</span>}
+            </>
+          );
+        })}
+
+        {roots.length > 0 && <span class="text-foreground/30 mx-1">·</span>}
 
         <a href="/dogs" class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors">
           Dogs
@@ -135,6 +168,20 @@ const roots = visiblePages.filter((p) => p.parentId === null);
               <span class="text-foreground/30">·</span>
               <a href="/contact" class="hover:text-primary transition-colors">Contact</a>
             </div>
+
+            {/* Child pages, if any */}
+            {Array.from(childrenByParent.values()).flat().length > 0 && (
+              <div class="flex justify-center items-center gap-2 flex-wrap text-xs text-foreground/60 mb-8">
+                {Array.from(childrenByParent.entries()).map(([parentId, children]) => (
+                  children.map((c, idx) => (
+                    <>
+                      <a href={`/${c.slug}`} class="hover:text-primary transition-colors">{c.title}</a>
+                      {idx < children.length - 1 && <span class="text-foreground/30">·</span>}
+                    </>
+                  ))
+                ))}
+              </div>
+            )}
 
             <!-- Copyright -->
             <p class="text-xs text-foreground/40 pt-4 border-t border-stone-200/60">
