@@ -17,38 +17,74 @@ const html = await marked(markdown);
 <section class="py-16 px-4 md:px-8">
   <style>
     :global(.richtext-content) h1 {
-      @apply text-4xl font-serif font-bold text-primary mt-8 mb-4;
+      font-family: var(--font-serif);
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      line-height: 1.25;
+      font-size: 2.25rem;
     }
-    @screen md {
+    @media (min-width: 768px) {
       :global(.richtext-content) h1 {
-        @apply text-5xl;
+        font-size: 3rem;
       }
     }
     :global(.richtext-content) h2 {
-      @apply text-3xl font-serif font-bold text-primary mt-8 mb-4;
+      font-family: var(--font-serif);
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      line-height: 1.33;
+      font-size: 1.875rem;
     }
-    @screen md {
+    @media (min-width: 768px) {
       :global(.richtext-content) h2 {
-        @apply text-4xl;
+        font-size: 2.25rem;
       }
     }
     :global(.richtext-content) h3 {
-      @apply text-2xl font-serif font-bold text-primary mt-6 mb-3;
+      font-family: var(--font-serif);
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.5rem;
     }
     :global(.richtext-content) p {
-      @apply text-base leading-relaxed text-foreground/80 mb-4;
+      font-size: 1rem;
+      line-height: 1.625;
+      color: color-mix(in oklch, var(--color-foreground) 80%, transparent);
+      margin-bottom: 1rem;
     }
     :global(.richtext-content) ul, :global(.richtext-content) ol {
-      @apply ml-6 mb-4 space-y-2;
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    :global(.richtext-content) ul > li, :global(.richtext-content) ol > li {
+      margin-bottom: 0.5rem;
     }
     :global(.richtext-content) li {
-      @apply text-base text-foreground/80;
+      font-size: 1rem;
+      color: color-mix(in oklch, var(--color-foreground) 80%, transparent);
     }
     :global(.richtext-content) a {
-      @apply text-primary hover:underline transition-colors;
+      color: var(--color-primary);
+      text-decoration: none;
+      transition: text-decoration 0.15s;
+    }
+    :global(.richtext-content) a:hover {
+      text-decoration: underline;
     }
     :global(.richtext-content) blockquote {
-      @apply border-l-4 border-primary/30 pl-4 py-2 italic text-foreground/70 mb-4;
+      border-left: 4px solid color-mix(in oklch, var(--color-primary) 30%, transparent);
+      padding-left: 1rem;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      font-style: italic;
+      color: color-mix(in oklch, var(--color-foreground) 70%, transparent);
+      margin-bottom: 1rem;
     }
   </style>
   <div class="richtext-content max-w-2xl mx-auto" set:html={html} />
