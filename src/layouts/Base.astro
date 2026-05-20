@@ -45,22 +45,9 @@ const fullTitle = title.includes(kennelName) ? title : `${title} — ${kennelNam
 const resolvedDescription = description ?? `${kennelName} — kennel website`;
 const jsonLdArr = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
-// Nav rendering: top-level CMS pages whose showInNav slot isn't false.
-// Children (parentId !== null) render as a dropdown under their parent.
-// Reserved slugs (owned by built-in template routes) are dropped so they don't
-// shadow the Dogs/Litters/Contact entries below.
 const reserved = new Set(['dogs', 'litters', 'contact', 'screening', '404']);
 const visiblePages = cmsPages.filter((p) => !reserved.has(p.slug));
-
 const roots = visiblePages.filter((p) => p.parentId === null);
-const childrenByParent = new Map<string, SiteManifestPageStub[]>();
-for (const p of visiblePages) {
-  if (p.parentId) {
-    const list = childrenByParent.get(p.parentId) ?? [];
-    list.push(p);
-    childrenByParent.set(p.parentId, list);
-  }
-}
 ---
 <!doctype html>
 <html lang="en">
@@ -78,213 +65,84 @@ for (const p of visiblePages) {
       <script is:inline type="application/ld+json" set:html={JSON.stringify(ld)} />
     ))}
   </head>
-  <body class="min-h-screen flex flex-col">
-    <header class="sticky top-0 z-50 bg-card border-b border-border">
-      <div class="mx-auto max-w-7xl px-4">
-        <div class="flex items-center justify-between py-3 md:py-4">
-          <!-- Logo / Logotype -->
-          <a href="/" class="hover:opacity-75 transition-opacity">
-            {logoUrl ? (
-              <img src={logoUrl} alt={kennelName} class="h-14 w-auto object-contain" />
-            ) : (
-              <div class="text-2xl font-serif font-bold text-primary">{kennelName}</div>
-            )}
-          </a>
-
-          <!-- Desktop nav -->
-          <nav class="hidden md:flex items-center gap-6">
-            {roots.map((p) => {
-              const kids = childrenByParent.get(p.id) ?? [];
-              if (kids.length === 0) {
-                return (
-                  <a href={`/${p.slug}`} class="text-sm text-foreground hover:text-primary hover:underline transition-colors">
-                    {p.title}
-                  </a>
-                );
-              }
-              return (
-                <div class="relative group">
-                  <button class="flex items-center gap-1 text-sm text-foreground hover:text-primary transition-colors">
-                    {p.title}
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  <div class="absolute left-0 top-full pt-2 w-48 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150">
-                    <div class="bg-white border border-border rounded-lg shadow-lg py-2">
-                      {kids.map((c) => (
-                        <a href={`/${c.slug}`} class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">{c.title}</a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            <!-- Dogs (built-in) -->
-            <div class="relative group">
-              <button class="flex items-center gap-1 text-sm text-foreground hover:text-primary transition-colors">
-                Dogs
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div class="absolute left-0 top-full pt-2 w-40 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150">
-                <div class="bg-white border border-border rounded-lg shadow-lg py-2">
-                  <a href="/dogs#males" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">Studs</a>
-                  <a href="/dogs#females" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">Dams</a>
-                  <a href="/dogs#for-sale" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">For Sale</a>
-                  <a href="/dogs#retired" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">Retired</a>
-                </div>
-              </div>
-            </div>
-
-            <!-- Litters (built-in) -->
-            <div class="relative group">
-              <button class="flex items-center gap-1 text-sm text-foreground hover:text-primary transition-colors">
-                Litters
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div class="absolute left-0 top-full pt-2 w-40 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150">
-                <div class="bg-white border border-border rounded-lg shadow-lg py-2">
-                  <a href="/litters#current" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">Current</a>
-                  <a href="/litters#upcoming" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">Upcoming</a>
-                  <a href="/litters#planned" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">Planned</a>
-                  <a href="/litters#past" class="block px-4 py-2 text-sm text-foreground hover:text-primary hover:bg-primary/5 transition-colors">Past</a>
-                </div>
-              </div>
-            </div>
-
-            <a href="/contact" class="text-sm font-medium text-white bg-accent px-5 py-2 rounded-full hover:bg-accent/90 transition-colors">
-              Contact
-            </a>
-          </nav>
-
-          <!-- Mobile hamburger -->
-          <button
-            id="mobile-menu-btn"
-            class="md:hidden p-2 rounded-md text-foreground hover:bg-secondary transition-colors"
-            aria-label="Open menu"
-          >
-            <svg id="hamburger-icon" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            <svg id="close-icon" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+  <body class="min-h-screen flex flex-col bg-background">
+    <header class="sticky top-0 z-50 bg-background border-b border-stone-200/60">
+      <!-- Centered logo row -->
+      <div class="flex justify-center py-6 md:py-8">
+        <a href="/" class="hover:opacity-80 transition-opacity">
+          {logoUrl ? (
+            <img src={logoUrl} alt={kennelName} class="h-16 md:h-20 w-auto object-contain" />
+          ) : (
+            <div class="text-3xl md:text-4xl font-serif font-bold text-primary">{kennelName}</div>
+          )}
+        </a>
       </div>
 
-      <!-- Mobile menu -->
-      <div id="mobile-menu" class="hidden md:hidden border-t border-border bg-white">
-        <div class="px-4 py-3 space-y-1">
-          {roots.map((p) => {
-            const kids = childrenByParent.get(p.id) ?? [];
-            if (kids.length === 0) {
-              return (
-                <a href={`/${p.slug}`} class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">{p.title}</a>
-              );
-            }
-            return (
-              <>
-                <a href={`/${p.slug}`} class="block px-2 py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors">{p.title}</a>
-                {kids.map((c) => (
-                  <a href={`/${c.slug}`} class="block px-4 py-2 text-sm text-foreground hover:text-primary transition-colors">{c.title}</a>
-                ))}
-              </>
-            );
-          })}
-
-          <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-3 pb-1">Dogs</p>
-          <a href="/dogs#males" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Studs</a>
-          <a href="/dogs#females" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Dams</a>
-          <a href="/dogs#for-sale" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">For Sale</a>
-          <a href="/dogs#retired" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Retired</a>
-
-          <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-3 pb-1">Litters</p>
-          <a href="/litters#current" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Current</a>
-          <a href="/litters#upcoming" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Upcoming</a>
-          <a href="/litters#planned" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Planned</a>
-          <a href="/litters#past" class="block px-2 py-2 text-sm text-foreground hover:text-primary transition-colors">Past</a>
-
-          <div class="pt-3 pb-2">
-            <a href="/contact" class="block w-full text-center px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
-              Contact
+      <!-- Thin nav row -->
+      <nav class="flex justify-center items-center gap-1 py-3 px-4 border-t border-stone-200/60 flex-wrap">
+        {roots.map((p) => (
+          <>
+            <a href={`/${p.slug}`} class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors">
+              {p.title}
             </a>
-          </div>
-        </div>
-      </div>
+            <span class="text-foreground/30 mx-1">·</span>
+          </>
+        ))}
+
+        <a href="/dogs" class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors">
+          Dogs
+        </a>
+        <span class="text-foreground/30 mx-1">·</span>
+
+        <a href="/litters" class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors">
+          Litters
+        </a>
+        <span class="text-foreground/30 mx-1">·</span>
+
+        <a href="/contact" class="text-sm text-foreground/80 hover:text-primary underline-offset-4 hover:underline transition-colors">
+          Contact
+        </a>
+      </nav>
     </header>
 
     <main class="flex-1">
       <slot />
     </main>
 
-    <footer class="border-t border-border bg-white mt-20">
+    <footer class="border-t border-stone-200/60 bg-background mt-20">
       {footerWidgets.length > 0 ? (
         <FooterWidgetRenderer widgets={footerWidgets} />
       ) : (
-        <div class="mx-auto max-w-7xl px-4 py-16">
-          <!-- Brand + tagline -->
-          <div class="text-center mb-12">
-            <h2 class="text-4xl font-serif font-bold text-primary mb-3">{kennelName}</h2>
-            <p class="text-foreground/70 text-sm leading-relaxed max-w-md mx-auto">{resolvedDescription}</p>
-          </div>
+        <div class="py-20 px-6">
+          <div class="max-w-2xl mx-auto text-center">
+            <!-- About copy -->
+            <p class="text-base leading-relaxed text-foreground/80 mb-12">
+              {resolvedDescription}
+            </p>
 
-          <!-- Navigation grid -->
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12 py-8 border-y border-border/50">
-            <!-- CMS Pages -->
-            {roots.length > 0 && (
-              <div>
-                <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Pages</p>
-                <ul class="space-y-2 text-sm">
-                  {roots.map((p) => (
-                    <li><a href={`/${p.slug}`} class="text-foreground/70 hover:text-primary transition-colors">{p.title}</a></li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <!-- Dogs -->
-            <div>
-              <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Dogs</p>
-              <ul class="space-y-2 text-sm">
-                <li><a href="/dogs#males" class="text-foreground/70 hover:text-primary transition-colors">Studs</a></li>
-                <li><a href="/dogs#females" class="text-foreground/70 hover:text-primary transition-colors">Dams</a></li>
-                <li><a href="/dogs#for-sale" class="text-foreground/70 hover:text-primary transition-colors">For Sale</a></li>
-              </ul>
+            <!-- Thin inline nav row -->
+            <div class="flex justify-center items-center gap-2 mb-8 flex-wrap text-sm text-foreground/70">
+              {roots.map((p, i) => (
+                <>
+                  <a href={`/${p.slug}`} class="hover:text-primary transition-colors">{p.title}</a>
+                  {i < roots.length - 1 && <span class="text-foreground/30">·</span>}
+                </>
+              ))}
+              {roots.length > 0 && <span class="text-foreground/30">·</span>}
+              <a href="/dogs" class="hover:text-primary transition-colors">Dogs</a>
+              <span class="text-foreground/30">·</span>
+              <a href="/litters" class="hover:text-primary transition-colors">Litters</a>
+              <span class="text-foreground/30">·</span>
+              <a href="/contact" class="hover:text-primary transition-colors">Contact</a>
             </div>
 
-            <!-- Connect -->
-            <div>
-              <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Connect</p>
-              <ul class="space-y-2 text-sm">
-                <li><a href="/contact" class="text-foreground/70 hover:text-primary transition-colors">Contact</a></li>
-                <li><a href="/screening" class="text-foreground/70 hover:text-primary transition-colors">Puppies</a></li>
-              </ul>
-            </div>
+            <!-- Copyright -->
+            <p class="text-xs text-foreground/40 pt-4 border-t border-stone-200/60">
+              &copy; {new Date().getFullYear()} {kennelName}. All rights reserved.
+            </p>
           </div>
         </div>
       )}
-      <div class="border-t border-border py-6 text-center text-xs text-foreground/50">
-        &copy; {new Date().getFullYear()} {kennelName}. All rights reserved.
-      </div>
     </footer>
-
-    <script>
-      const btn = document.getElementById('mobile-menu-btn');
-      const menu = document.getElementById('mobile-menu');
-      const hamburger = document.getElementById('hamburger-icon');
-      const close = document.getElementById('close-icon');
-      btn?.addEventListener('click', () => {
-        const isOpen = !menu?.classList.contains('hidden');
-        menu?.classList.toggle('hidden', isOpen);
-        hamburger?.classList.toggle('hidden', !isOpen);
-        close?.classList.toggle('hidden', isOpen);
-      });
-    </script>
   </body>
 </html>

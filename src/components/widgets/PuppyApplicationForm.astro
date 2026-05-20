@@ -18,29 +18,35 @@ const applyUrl = mode === "embed" ? `/embed/apply/${KENNEL_ID}` : `/apply/${KENN
 
 {
   mode === "link" ? (
-    <section class="py-12 px-4 md:px-8">
-      <div class="max-w-3xl mx-auto text-center">
-        {introText && <p class="mb-6 text-gray-700">{introText}</p>}
+    <section class="py-20 px-6">
+      <div class="max-w-md mx-auto text-center">
+        {introText && (
+          <p class="text-lg text-foreground/80 mb-8">
+            {introText}
+          </p>
+        )}
         <a
           href={applyUrl}
-          class="inline-block rounded-md bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
+          class="inline-block bg-accent text-white px-8 py-3 rounded-full hover:bg-accent/90 transition font-medium"
         >
           {ctaLabel}
         </a>
       </div>
     </section>
   ) : (
-    <section class="py-12 px-4 md:px-8">
-      <div class="max-w-3xl mx-auto">
+    <section class="py-20 px-6">
+      <div class="max-w-2xl mx-auto">
         {introText && (
-          <p class="mb-8 text-center text-gray-700">{introText}</p>
+          <p class="text-lg text-foreground/80 text-center mb-12">
+            {introText}
+          </p>
         )}
         <iframe
           src={applyUrl}
           title="Puppy Application Form"
-          class="w-full border-0 rounded-lg overflow-hidden"
+          class="w-full border-0 rounded-2xl overflow-hidden"
           style={{
-            minHeight: "600px",
+            minHeight: "700px",
           }}
         />
       </div>

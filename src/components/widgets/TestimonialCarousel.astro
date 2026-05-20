@@ -8,37 +8,43 @@ interface Props {
 const { widget } = Astro.props;
 const {
   items = [],
-  autoplay = false,
 } = widget.props as {
-  items?: { quote: string; attribution: string; image?: string }[];
-  autoplay?: boolean;
+  items?: { quote: string; attribution: string }[];
 };
 ---
 
-<section class="py-12 px-4 md:px-8">
-  <div
-    class="relative max-w-3xl mx-auto"
-    data-autoplay={autoplay}
-  >
-    <div class="grid gap-8">
-      {items.map((item, idx) => (
-        <div
-          key={idx}
-          class="flex flex-col md:flex-row gap-6 items-center p-6 bg-muted rounded-lg"
-        >
-          {item.image && (
-            <img
-              src={item.image}
-              alt={item.attribution}
-              class="w-24 h-24 rounded-full object-cover flex-shrink-0"
-            />
-          )}
-          <div class="flex-1">
-            <blockquote class="text-lg italic mb-4">"{item.quote}"</blockquote>
-            <p class="font-semibold">— {item.attribution}</p>
-          </div>
+<section class="py-24 px-6">
+  <div class="max-w-3xl mx-auto text-center">
+    {items.length > 0 && (
+      <>
+        {/* Open quote glyph */}
+        <div class="text-7xl font-serif text-accent leading-none mb-4">
+          "
         </div>
-      ))}
-    </div>
+
+        {/* Quote (first item) */}
+        <blockquote class="text-2xl md:text-3xl font-serif italic text-foreground leading-relaxed mb-8">
+          {items[0].quote}
+        </blockquote>
+
+        {/* Attribution */}
+        <p class="text-sm uppercase tracking-widest text-foreground/60">
+          — {items[0].attribution}
+        </p>
+
+        {/* Dot navigation */}
+        {items.length > 1 && (
+          <div class="flex gap-2 justify-center mt-8">
+            {items.map((_, idx) => (
+              <button
+                key={idx}
+                class="w-2 h-2 rounded-full bg-primary/50 hover:bg-primary transition"
+                aria-label={`Testimonial ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    )}
   </div>
 </section>

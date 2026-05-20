@@ -7,13 +7,11 @@ interface Props {
 }
 
 const { widget } = Astro.props;
-const { filter = "all", limit = 12, layout = "grid" } = widget.props as {
+const { filter = "all", limit = 12 } = widget.props as {
   filter?: "sires" | "dams" | "all";
   limit?: number;
-  layout?: "grid" | "list";
 };
 
-// Map widget filter to API params
 const statusFilter = {
   sires: "Sire",
   dams: "Dam",
@@ -35,63 +33,47 @@ const dogs = response.items || [];
 
 {
   dogs.length === 0 ? (
-    <section class="py-12 px-4 md:px-8">
-      <div class="text-center text-muted-foreground">No dogs to display.</div>
-    </section>
-  ) : layout === "list" ? (
-    <section class="py-16 px-4 md:px-8">
-      <div class="max-w-4xl mx-auto space-y-8">
-        {dogs.map((dog) => (
-          <div class="flex gap-8 pb-8 border-b border-border/50 last:border-b-0">
-            {dog.thumbnailPhotoUrl && (
-              <div class="flex-shrink-0 w-32 h-40 rounded-2xl overflow-hidden">
-                <img
-                  src={dog.thumbnailPhotoUrl}
-                  alt={dog.callName || dog.registeredName}
-                  class="w-full h-full object-cover"
-                />
-              </div>
-            )}
-            <div class="flex-1">
-              <h3 class="text-2xl font-serif font-bold text-primary mb-1">
-                {dog.callName || dog.registeredName}
-              </h3>
-              {dog.status && (
-                <p class="text-sm font-medium text-accent mb-3">{dog.status}</p>
-              )}
-              {dog.description && (
-                <p class="text-base text-foreground/70 leading-relaxed">{dog.description}</p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+    <section class="py-12 px-6">
+      <div class="text-center text-foreground/60">No dogs to display.</div>
     </section>
   ) : (
-    <section class="py-16 px-4 md:px-8">
-      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {dogs.map((dog) => (
-          <div class="flex flex-col overflow-hidden">
-            {dog.thumbnailPhotoUrl && (
-              <div class="aspect-[3/4] overflow-hidden rounded-2xl mb-4">
-                <img
-                  src={dog.thumbnailPhotoUrl}
-                  alt={dog.callName || dog.registeredName}
-                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
+    <section class="py-20 px-6">
+      <div class="max-w-6xl mx-auto space-y-24">
+        {dogs.map((dog, idx) => {
+          const isEven = idx % 2 === 0;
+          return (
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
+              {/* Image column */}
+              <div class={`${isEven ? "md:col-span-5 md:col-start-1" : "md:col-span-5 md:col-start-8 md:order-2"}`}>
+                {dog.thumbnailPhotoUrl && (
+                  <img
+                    src={dog.thumbnailPhotoUrl}
+                    alt={dog.callName || dog.registeredName}
+                    class="w-full aspect-[4/5] rounded-2xl object-cover"
+                  />
+                )}
               </div>
-            )}
-            <h3 class="text-lg font-serif font-bold text-primary mb-1">
-              {dog.callName || dog.registeredName}
-            </h3>
-            {dog.status && (
-              <p class="text-sm text-accent font-medium mb-2">{dog.status}</p>
-            )}
-            {dog.description && (
-              <p class="text-sm text-foreground/60 line-clamp-2">{dog.description}</p>
-            )}
-          </div>
-        ))}
+
+              {/* Text column */}
+              <div class={`${isEven ? "md:col-span-6 md:col-start-7" : "md:col-span-6 md:col-start-1 md:order-1"}`}>
+                <div class="text-xs uppercase tracking-widest text-accent mb-3">
+                  {dog.status || "Our Dog"}
+                </div>
+                <h3 class="text-4xl md:text-5xl font-serif font-bold text-primary mb-2">
+                  {dog.callName || dog.registeredName}
+                </h3>
+                <p class="text-sm uppercase tracking-wider text-foreground/60 mb-6">
+                  {dog.registeredName && dog.callName ? dog.registeredName : ""}
+                </p>
+                {dog.description && (
+                  <p class="text-lg leading-relaxed text-foreground/80">
+                    {dog.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   )
