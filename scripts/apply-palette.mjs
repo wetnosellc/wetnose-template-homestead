@@ -91,6 +91,10 @@ function renderPaletteCss(p) {
     formatOklch({ l: Math.min(0.55, fgOk.l + 0.3), c: fgOk.c * 0.5, h: fgOk.h }),
   );
 
+  // parchment: light surface derived from secondary (for template-specific use).
+  const secondaryOk = hexToOklch(p.secondary);
+  push("parchment", formatOklch({ l: Math.min(0.96, secondaryOk.l + 0.05), c: secondaryOk.c * 0.5, h: secondaryOk.h }));
+
   lines.push("}", "");
   return lines.join("\n");
 }
