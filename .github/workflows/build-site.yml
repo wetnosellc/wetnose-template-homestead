@@ -40,6 +40,10 @@ jobs:
       WEBHOOK_URL: ${{ github.event.client_payload.webhookUrl || github.event.inputs.webhookUrl }}
       # Sensitive: only present on repository_dispatch payloads. Masked in the first step.
       READONLY_KEY: ${{ github.event.client_payload.readOnlyKey }}
+      # Optional user-supplied color palette (8 hex tokens). When absent or
+      # null, scripts/apply-palette.mjs writes an empty palette.css and the
+      # template's native colors apply.
+      COLOR_PALETTE: ${{ toJSON(github.event.client_payload.colorPalette) }}
 
     steps:
       - name: Mask read-only key
@@ -66,6 +70,7 @@ jobs:
           WETNOSE_SITE_ID: ${{ env.SITE_ID }}
           WETNOSE_BUILD_ID: ${{ env.BUILD_ID }}
           WETNOSE_BUILD_TIME: ${{ steps.buildmeta.outputs.buildTime }}
+          WETNOSE_COLOR_PALETTE: ${{ env.COLOR_PALETTE }}
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
