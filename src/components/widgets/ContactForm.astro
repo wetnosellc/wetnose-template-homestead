@@ -1,6 +1,8 @@
 ---
-import { fetchManifest, SITE_ID } from "../../lib/wetnose";
-import type { WidgetInstance } from "@wetnose/shared";
+import { safeGetManifest } from "@/lib/client";
+import type { WidgetInstance } from "@/lib/template-kit";
+
+const SITE_ID = import.meta.env.WETNOSE_SITE_ID ?? "";
 
 interface Props {
   widget: WidgetInstance;
@@ -14,12 +16,8 @@ const { recipientEmail = "", confirmationText = "Thanks — we'll be in touch." 
 
 let emailTo = recipientEmail;
 if (!emailTo) {
-  try {
-    const manifest = await fetchManifest();
-    emailTo = manifest.kennel?.email || "";
-  } catch (err) {
-    console.warn("[ContactForm] Failed to fetch kennel email:", err);
-  }
+  const manifest = await safeGetManifest();
+  emailTo = manifest?.kennel?.email || "";
 }
 ---
 

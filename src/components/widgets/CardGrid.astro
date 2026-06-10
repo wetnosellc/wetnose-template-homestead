@@ -1,0 +1,63 @@
+---
+import type { WidgetInstance } from "@/lib/template-kit";
+
+interface Props {
+  widget: WidgetInstance;
+}
+
+const { widget } = Astro.props;
+const { cards = [], columns } = widget.props as {
+  cards?: Array<{ title?: string; summary?: string; image?: string; icon?: string; ctaUrl?: string }>;
+  columns?: number;
+};
+
+const cols = typeof columns === "number" ? columns : 3;
+const colClass =
+  cols >= 4 ? "md:grid-cols-4"
+  : cols === 2 ? "md:grid-cols-2"
+  : "md:grid-cols-3";
+---
+
+{cards.length > 0 && (
+  <section class="py-12 px-4 md:px-8">
+    <div class={`max-w-7xl mx-auto grid grid-cols-1 ${colClass} gap-6`}>
+      {cards.map((card) => {
+        const inner = (
+          <>
+            {card.image && (
+              <img
+                src={card.image}
+                alt={card.title ?? ""}
+                class="w-full aspect-[16/9] object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            )}
+            <div class="flex-1 flex flex-col p-5">
+              <h3 class="text-lg font-bold text-foreground mb-2 leading-tight">{card.title}</h3>
+              {card.summary && (
+                <p class="text-sm text-muted-foreground leading-relaxed mb-3">{card.summary}</p>
+              )}
+              {card.ctaUrl && (
+                <span class="mt-auto text-sm font-medium text-primary group-hover:underline">
+                  View →
+                </span>
+              )}
+            </div>
+          </>
+        );
+
+        return card.ctaUrl ? (
+          <a
+            href={card.ctaUrl}
+            class="group flex flex-col bg-white border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
+            {inner}
+          </a>
+        ) : (
+          <div class="flex flex-col bg-white border border-border rounded-xl overflow-hidden">
+            {inner}
+          </div>
+        );
+      })}
+    </div>
+  </section>
+)}

@@ -1,37 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
 import WidgetRenderer from '../components/WidgetRenderer.astro';
-import { fetchManifest, fetchSitePage } from '@/lib/wetnose';
+import { safeGetManifest, safeGetSitePage } from '@/lib/client';
 
 export async function getStaticPaths() {
-  const manifest = await fetchManifest();
-  // Skip reserved template routes so a CMS page named "dogs" can't clobber the
-  // built-in dogs index. These slugs are owned by the template.
-  const reserved = new Set([
-    'dogs',
-    'litters',
-    'contact',
-    'screening',
-    '404',
-    '',
-  ]);
-
+  const manifest = await safeGetManifest();
+  if (!manifest) return [];
+  const reserved = new Set(['dogs', 'litters', 'contact', 'screening', '404', '', '/']);
   const eligible = manifest.pages.filter(
-    (p) => !reserved.has(p.slug) && p.pageKind !== 'special',
+    (p) => p.slug && !reserved.has(p.slug) && p.pageKind !== 'special',
   );
-
   const entries = await Promise.all(
     eligible.map(async (stub) => {
-      try {
-        const page = await fetchSitePage(stub.slug);
-        return { params: { slug: stub.slug }, props: { page } };
-      } catch (err) {
-        console.warn(`[cms] failed to fetch page "${stub.slug}":`, err);
-        return null;
-      }
+      const page = await safeGetSitePage(stub.slug);
+      if (!page) return null;
+      return { params: { slug: stub.slug }, props: { page } };
     }),
   );
-
   return entries.filter((e): e is NonNullable<typeof e> => e !== null);
 }
 

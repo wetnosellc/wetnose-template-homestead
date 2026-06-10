@@ -1,5 +1,5 @@
 ---
-import type { WidgetInstance } from "@wetnose/shared";
+import type { WidgetInstance } from "@/lib/template-kit";
 import Hero from "./widgets/Hero.astro";
 import RichText from "./widgets/RichText.astro";
 import ImageGallery from "./widgets/ImageGallery.astro";
@@ -10,6 +10,8 @@ import DogsGrid from "./widgets/DogsGrid.astro";
 import LittersGrid from "./widgets/LittersGrid.astro";
 import ContactForm from "./widgets/ContactForm.astro";
 import PuppyApplicationForm from "./widgets/PuppyApplicationForm.astro";
+import CardGrid from "./widgets/CardGrid.astro";
+import SectionHeading from "./widgets/SectionHeading.astro";
 
 interface Props {
   widgets: WidgetInstance[];
@@ -28,6 +30,8 @@ const widgetComponents: Record<string, any> = {
   "litters-grid": LittersGrid,
   "contact-form": ContactForm,
   "puppy-application-form": PuppyApplicationForm,
+  "card-grid": CardGrid,
+  "section-heading": SectionHeading,
 };
 ---
 

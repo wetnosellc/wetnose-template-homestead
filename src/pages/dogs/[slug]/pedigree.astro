@@ -1,12 +1,12 @@
 ---
 import Base from '@/layouts/Base.astro';
 import PedigreeTree from '@/components/PedigreeTree.astro';
-import { fetchDogs, fetchDog, fetchDogPedigree } from '@/lib/wetnose';
+import { safeGetDogs, safeGetDog, safeGetPedigree } from '@/lib/client';
 import { dogSlug, buildDogSlugMap } from '@/lib/slugs';
 
 export async function getStaticPaths() {
-  const result = await fetchDogs({ limit: '100' });
-  const dogs = result.items;
+  const dogs = await safeGetDogs({ showOnWebsite: true, limit: 100 });
+  
   const slugMap = buildDogSlugMap(dogs);
   return Array.from(slugMap.entries()).map(([slug, dogId]) => ({
     params: { slug },
@@ -19,27 +19,30 @@ interface Props {
 }
 const { dogId } = Astro.props;
 
-const [dog, pedigree] = await Promise.all([
-  fetchDog(dogId),
-  fetchDogPedigree(dogId, 4).catch(() => null),
-]);
+const dog = await safeGetDog(dogId);
+if (!dog) return Astro.redirect('/dogs');
+const pedigree = await safeGetPedigree(dogId, 4);
+// legacy:
+
+
+
 
 const currentSlug = dogSlug(dog);
 ---
 
-<Base title={`Pedigree — ${dog.callName ?? dog.registeredName}`}>
+<Base title={`Pedigree — ${dog.name}`}>
   <div class="mx-auto max-w-7xl px-4 py-10">
     <!-- Breadcrumb -->
     <nav class="text-sm text-muted-foreground mb-6">
       <a href="/dogs" class="hover:text-primary transition-colors">Dogs</a>
       <span class="mx-2">/</span>
-      <a href={`/dogs/${currentSlug}`} class="hover:text-primary transition-colors">{dog.callName ?? dog.registeredName}</a>
+      <a href={`/dogs/${currentSlug}`} class="hover:text-primary transition-colors">{dog.name}</a>
       <span class="mx-2">/</span>
       <span class="text-foreground">Pedigree</span>
     </nav>
 
     <h1 class="text-3xl font-bold text-foreground mb-2">
-      Pedigree — {dog.callName ?? dog.registeredName}
+      Pedigree — {dog.name}
     </h1>
     <p class="text-muted-foreground mb-8">4-generation pedigree</p>
 
@@ -57,7 +60,7 @@ const currentSlug = dogSlug(dog);
 
     <div class="mt-8">
       <a href={`/dogs/${currentSlug}`} class="text-sm text-primary hover:underline">
-        ← Back to {dog.callName ?? dog.registeredName}
+        ← Back to {dog.name}
       </a>
     </div>
   </div>

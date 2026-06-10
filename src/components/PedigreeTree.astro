@@ -1,5 +1,5 @@
 ---
-import type { PedigreeNode } from '@/lib/wetnose';
+import type { PedigreeNode } from '@wetnosellc/template-kit';
 
 interface Props {
   node: PedigreeNode | null;
@@ -15,9 +15,7 @@ const { node, generation, maxGenerations } = Astro.props;
     <div class={`bg-white border border-border rounded-lg p-2 text-center shadow-sm min-w-0 ${
       generation === 0 ? 'ring-2 ring-primary' : ''
     }`}>
-      {node.thumbnailPhotoUrl && generation === 0 && (
-        <img src={node.thumbnailPhotoUrl} alt={node.callName ?? node.registeredName} class="w-16 h-16 rounded-full object-cover mx-auto mb-2" />
-      )}
+      {/* PedigreeNode does not carry photos */}
       <p class={`font-medium text-foreground leading-tight ${generation === 0 ? 'text-sm' : 'text-xs'}`}>
         {node.registeredName}
       </p>

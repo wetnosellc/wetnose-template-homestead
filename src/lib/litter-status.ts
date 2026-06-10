@@ -1,4 +1,4 @@
-import type { Litter } from "./wetnose";
+import type { Litter } from '@wetnosellc/template-kit';
 
 export type LitterStatus = "Planned" | "Upcoming" | "Current" | "Sold Out" | "Past" | "Unknown";
 
@@ -6,8 +6,8 @@ const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 
 export function getLitterStatus(litter: Litter): LitterStatus {
   const breeding = litter.breeding;
-  const birthDate = litter.birthDate ? new Date(litter.birthDate) : null;
-  const puppies = litter.puppies ?? [];
+  const birthDate = litter.birthDate; // already a Date
+  const puppies = litter.puppies;
 
   if (!breeding) {
     if (birthDate) return birthDate < new Date(Date.now() - SIX_MONTHS_MS) ? "Past" : "Current";

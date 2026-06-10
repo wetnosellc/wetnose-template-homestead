@@ -1,6 +1,7 @@
 ---
-import { fetchLitters } from "../../lib/wetnose";
-import type { WidgetInstance } from "@wetnose/shared";
+import { getClient } from "@/lib/client";
+import type { WidgetInstance } from "@/lib/template-kit";
+import type { Litter } from "@wetnosellc/template-kit";
 
 interface Props {
   widget: WidgetInstance;
@@ -8,24 +9,20 @@ interface Props {
 
 const { widget } = Astro.props;
 const { filter = "current", limit = 6 } = widget.props as {
-  filter?: "current" | "past" | "all";
+  filter?: "current" | "past" | "all" | "planned";
   limit?: number;
 };
 
-let params: Record<string, string> = {
-  limit: String(limit),
-};
-
-if (filter === "current") {
-  params.status = "Planned,Bred,Confirmed,Whelped";
-} else if (filter === "past") {
-  params.status = "Whelped";
-  params.sortBy = "birthDate";
-  params.sortOrder = "desc";
+let litters: Litter[] = [];
+const client = getClient();
+if (client) {
+  try {
+    litters = await client.getLittersForGrid({
+      filter: (filter as "current" | "past" | "all" | "planned"),
+      maxItems: typeof limit === "number" && limit > 0 ? limit : 6,
+    });
+  } catch (_) { litters = []; }
 }
-
-const response = await fetchLitters(params);
-const litters = response.items || [];
 ---
 
 {
@@ -59,11 +56,11 @@ const litters = response.items || [];
           <div class="timeline-line"></div>
           {litters.map((litter, idx) => {
             const dateStr = litter.birthDate
-              ? new Date(litter.birthDate).toLocaleDateString("en-US", {
+              ? litter.birthDate.toLocaleDateString("en-US", {
                   month: "short",
                   year: "numeric",
                 })
-              : litter.status || "Upcoming";
+              : litter.breeding ? "Upcoming" : "—";
 
             return (
               <div class="grid grid-cols-[120px_24px_1fr] gap-6 pb-16 last:pb-0" key={idx}>
@@ -85,7 +82,7 @@ const litters = response.items || [];
                       {litter.sire.callName || litter.sire.registeredName} × {litter.dam.callName || litter.dam.registeredName}
                     </p>
                   )}
-                  {litter.puppies && litter.puppies.length > 0 && (
+                  {litter.puppies.length > 0 && (
                     <p class="text-base text-foreground/80 leading-relaxed">
                       {litter.puppies.length} puppet{litter.puppies.length === 1 ? "" : "s"}
                     </p>

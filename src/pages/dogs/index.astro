@@ -1,12 +1,12 @@
 ---
 import Base from '@/layouts/Base.astro';
 import DogCard from '@/components/DogCard.astro';
-import { fetchDogs } from '@/lib/wetnose';
+import { safeGetDogs } from '@/lib/client';
 import { dogSlug, buildDogSlugMap } from '@/lib/slugs';
-import type { Dog } from '@/lib/wetnose';
+import type { Dog } from '@wetnosellc/template-kit';
 
-const result = await fetchDogs({ limit: '100', showOnWebsite: 'true' });
-const dogs = [...result.items].sort((a, b) =>
+const dogs = await safeGetDogs({ showOnWebsite: true, limit: 100 });
+dogs.sort((a, b) =>
   (a.callName ?? a.registeredName).localeCompare(b.callName ?? b.registeredName),
 );
 
@@ -18,10 +18,10 @@ for (const [slug, id] of slugMap) {
 
 const RETIRED_STATUSES = new Set(['Retired', 'Historical', 'Deceased']);
 
-const males = dogs.filter(d => d.sex === 'M' && !RETIRED_STATUSES.has(d.status) && !d.forSale);
-const females = dogs.filter(d => d.sex === 'F' && !RETIRED_STATUSES.has(d.status) && !d.forSale);
+const males = dogs.filter(d => d.sex === 'M' && !d.statuses.some(s => RETIRED_STATUSES.has(s.name)) && !d.forSale);
+const females = dogs.filter(d => d.sex === 'F' && !d.statuses.some(s => RETIRED_STATUSES.has(s.name)) && !d.forSale);
 const forSale = dogs.filter(d => d.forSale);
-const retired = dogs.filter(d => RETIRED_STATUSES.has(d.status));
+const retired = dogs.filter(d => d.statuses.some(s => RETIRED_STATUSES.has(s.name)));
 
 interface SectionDef {
   id: string;

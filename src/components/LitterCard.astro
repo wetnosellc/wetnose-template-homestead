@@ -1,6 +1,6 @@
 ---
 import StatusPill from '@/components/StatusPill.astro';
-import type { Litter } from '@/lib/wetnose';
+import type { Litter } from '@wetnosellc/template-kit';
 import type { LitterStatus } from '@/lib/litter-status';
 
 interface Props {
@@ -11,20 +11,20 @@ interface Props {
 
 const { litter, slug, status } = Astro.props;
 
-const photoUrl = litter.thumbnailPhotoUrl ?? litter.photos?.[0]?.url ?? null;
+const photoUrl = litter.thumbnailPhotoUrl ?? litter.photos[0]?.url ?? null;
 
-function formatDate(d: string | null): string {
+function formatDate(d: Date | null): string {
   if (!d) return '';
-  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 const sireName = litter.sire?.callName ?? litter.sire?.registeredName ?? null;
 const damName = litter.dam?.callName ?? litter.dam?.registeredName ?? null;
 
-const maleCount = litter.puppies?.filter(p => p.sex === 'M').length ?? null;
-const femaleCount = litter.puppies?.filter(p => p.sex === 'F').length ?? null;
+const maleCount = litter.puppies.filter(p => p.sex === 'M').length;
+const femaleCount = litter.puppies.filter(p => p.sex === 'F').length;
 
-const displayName = litter.litterName ?? `${sireName ?? '?'} × ${damName ?? '?'}`;
+const displayName = litter.litterName || `${sireName ?? '?'} × ${damName ?? '?'}`;
 const hasDetailPage = litter.litterName !== null;
 
 // Extract short code from litter name (e.g. "Z Litter" → "Z") or first letter of sire/dam
@@ -82,11 +82,11 @@ const pillVariant: PillVariant = statusVariantMap[status] ?? 'past';
       )}
 
 
-      {(maleCount !== null || femaleCount !== null) && (
+      {(maleCount > 0 || femaleCount > 0) && (
         <p class="text-xs text-muted-foreground mb-3">
-          {maleCount !== null && <span class="text-blue-600 font-medium">{maleCount}M</span>}
-          {maleCount !== null && femaleCount !== null && <span class="mx-1">/</span>}
-          {femaleCount !== null && <span class="text-pink-600 font-medium">{femaleCount}F</span>}
+          <span class="text-blue-600 font-medium">{maleCount}M</span>
+          <span class="mx-1">/</span>
+          <span class="text-pink-600 font-medium">{femaleCount}F</span>
         </p>
       )}
 

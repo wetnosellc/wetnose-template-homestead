@@ -1,6 +1,7 @@
 ---
-import { KENNEL_ID } from "../../lib/wetnose";
-import type { WidgetInstance } from "@wetnose/shared";
+import type { WidgetInstance } from "@/lib/template-kit";
+
+const KENNEL_ID = import.meta.env.WETNOSE_KENNEL_ID ?? "";
 
 interface Props {
   widget: WidgetInstance;

@@ -1,9 +1,10 @@
 ---
 import '@/styles/global.css';
+import { ViewTransitions } from 'astro:transitions';
 import MetaTags from '@/components/MetaTags.astro';
 import FooterWidgetRenderer from '@/components/FooterWidgetRenderer.astro';
-import { fetchKennel, fetchManifest } from '@/lib/wetnose';
-import type { SiteManifestPageStub } from '@/lib/template-kit';
+import { safeGetManifest } from '@/lib/client';
+import type { Widget as WidgetInstance } from '@wetnosellc/template-kit';
 
 interface Props {
   title: string;
@@ -24,31 +25,20 @@ const {
 const buildId = import.meta.env.WETNOSE_BUILD_ID ?? 'dev';
 const buildTime = import.meta.env.WETNOSE_BUILD_TIME ?? new Date().toISOString();
 
-let logoUrl: string | null = null;
-let kennelName = 'Kennel';
-let cmsPages: SiteManifestPageStub[] = [];
-let footerWidgets: any[] = [];
-try {
-  const [kennel, manifest] = await Promise.all([
-    fetchKennel(),
-    fetchManifest(),
-  ]);
-  logoUrl = kennel.logoUrl;
-  kennelName = kennel.name || kennelName;
-  cmsPages = manifest.pages;
-  footerWidgets = manifest.site?.footerWidgets ?? [];
-} catch (_) {
-  // fall back to empty nav + text logo
-}
+const manifest = await safeGetManifest();
+const kennelName = manifest?.kennelName ?? 'Kennel';
+const logoUrl = manifest?.logoUrl ?? null;
+const cmsPages = manifest?.pages ?? [];
+const footerWidgets: WidgetInstance[] = (manifest?.themeTokens?.footerWidgets as WidgetInstance[]) ?? [];
 
 const fullTitle = title.includes(kennelName) ? title : `${title} — ${kennelName}`;
 const resolvedDescription = description ?? `${kennelName} — kennel website`;
 const jsonLdArr = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
 const reserved = new Set(['dogs', 'litters', 'contact', 'screening', '404']);
-const visiblePages = cmsPages.filter((p) => !reserved.has(p.slug));
-const roots = visiblePages.filter((p) => p.parentId === null);
-const childrenByParent = new Map<string, SiteManifestPageStub[]>();
+const visiblePages = cmsPages.filter((p) => p.slug && !reserved.has(p.slug));
+const roots = visiblePages.filter((p) => !p.parentId);
+const childrenByParent = new Map<string, typeof cmsPages>();
 for (const p of visiblePages) {
   if (p.parentId) {
     const list = childrenByParent.get(p.parentId) ?? [];
@@ -69,6 +59,7 @@ for (const p of visiblePages) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <ViewTransitions />
     {jsonLdArr.map(ld => (
       <script is:inline type="application/ld+json" set:html={JSON.stringify(ld)} />
     ))}

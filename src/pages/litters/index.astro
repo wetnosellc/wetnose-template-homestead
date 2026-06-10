@@ -1,14 +1,14 @@
 ---
 import Base from '@/layouts/Base.astro';
 import LitterCard from '@/components/LitterCard.astro';
-import { fetchLitters } from '@/lib/wetnose';
+import { safeGetLitters } from '@/lib/client';
 import { getLitterStatus } from '@/lib/litter-status';
 import { litterSlug, buildLitterSlugMap } from '@/lib/slugs';
-import type { Litter } from '@/lib/wetnose';
+import type { Litter } from '@wetnosellc/template-kit';
 import type { LitterStatus } from '@/lib/litter-status';
 
-const result = await fetchLitters({ limit: '100' });
-const litters = result.items;
+const litters = await safeGetLitters({ limit: 100 });
+
 
 const slugMap = buildLitterSlugMap(litters);
 const idToSlug = new Map<string, string>();

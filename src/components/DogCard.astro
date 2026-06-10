@@ -1,21 +1,20 @@
 ---
 import StatusPill from '@/components/StatusPill.astro';
-import type { Dog } from '@/lib/wetnose';
-import type { DogTitle, DogHealthClearance } from '@/lib/wetnose';
+import type { Dog } from '@wetnosellc/template-kit';
 
 interface Props {
   dog: Dog;
   slug: string;
-  titles?: DogTitle[];
-  healthClearances?: DogHealthClearance[];
 }
 
-const { dog, slug, titles = [], healthClearances = [] } = Astro.props;
+const { dog, slug } = Astro.props;
+const titles = dog.titles;
+const healthClearances = dog.healthClearances;
 
-function ageFromBirthDate(birthDate: string | null, dateOfDeath?: string | null): string {
+function ageFromBirthDate(birthDate: Date | null, dateOfDeath?: Date | null): string {
   if (!birthDate) return '';
-  const birth = new Date(birthDate);
-  const end = dateOfDeath ? new Date(dateOfDeath) : new Date();
+  const birth = birthDate;
+  const end = dateOfDeath ?? new Date();
   const diffYears = (end.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
   if (diffYears < 1) {
     const months = Math.floor(diffYears * 12);
@@ -31,7 +30,7 @@ type StatusPillVariant = 'active' | 'for-sale' | 'stud' | 'retired' | 'frozen-se
 
 function statusVariant(dog: Dog): StatusPillVariant {
   if (dog.forSale) return 'for-sale';
-  if (dog.status === 'Retired' || dog.status === 'Historical') return 'retired';
+  if (dog.statuses.some(s => s.name === 'Retired' || s.name === 'Historical')) return 'retired';
   if (dog.studServiceAvailable) return 'stud';
   if (dog.frozenSemenAvailable) return 'frozen-semen';
   return 'active';
@@ -40,8 +39,8 @@ function statusVariant(dog: Dog): StatusPillVariant {
 const pillVariant = statusVariant(dog);
 const sexVariant: StatusPillVariant = dog.sex === 'M' ? 'male' : 'female';
 
-const titleChips = titles.slice(0, 5).map(t => t.title?.titleShortname ?? t.title?.titleName ?? '');
-const healthChips = healthClearances.slice(0, 5).map(h => h.healthTestType?.shortName ?? h.healthTestType?.name ?? '');
+const titleChips = titles.slice(0, 5).map(t => t.titleShortname ?? t.titleName ?? '');
+const healthChips = healthClearances.slice(0, 5).map(h => h.testName ?? '');
 
 const sizeStr = [dog.weight ? `${dog.weight} lb` : null, dog.height ? `${dog.height} in` : null].filter(Boolean).join(' · ');
 ---
@@ -53,7 +52,7 @@ const sizeStr = [dog.weight ? `${dog.weight} lb` : null, dog.height ? `${dog.hei
   {dog.thumbnailPhotoUrl ? (
     <img
       src={dog.thumbnailPhotoUrl}
-      alt={dog.callName ?? dog.registeredName}
+      alt={dog.name}
       class="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
     />
   ) : (
@@ -65,7 +64,7 @@ const sizeStr = [dog.weight ? `${dog.weight} lb` : null, dog.height ? `${dog.hei
   <div class="p-5 flex flex-col flex-1">
     <!-- Name first, then pills (matches Figma layout) -->
     <h3 class="text-xl font-bold text-foreground leading-tight mb-2">
-      {dog.callName ?? dog.registeredName}
+      {dog.name}
     </h3>
 
     <div class="flex flex-wrap gap-1.5 mb-2">

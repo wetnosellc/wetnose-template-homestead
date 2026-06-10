@@ -1,34 +1,31 @@
 ---
-import { fetchDogs } from "../../lib/wetnose";
-import type { WidgetInstance } from "@wetnose/shared";
+import { getClient } from "@/lib/client";
+import type { WidgetInstance } from "@/lib/template-kit";
+import type { Dog } from "@wetnosellc/template-kit";
 
 interface Props {
   widget: WidgetInstance;
 }
 
 const { widget } = Astro.props;
-const { filter = "all", limit = 12 } = widget.props as {
+const { filter = "all", status, limit = 12, layout = "grid" } = widget.props as {
   filter?: "sires" | "dams" | "all";
+  status?: "active" | "for-sale" | "retired" | "all";
   limit?: number;
+  layout?: "grid" | "list";
 };
 
-const statusFilter = {
-  sires: "Sire",
-  dams: "Dam",
-  all: undefined,
-}[filter];
-
-const params: Record<string, string> = {
-  limit: String(limit),
-  showOnWebsite: "true",
-};
-
-if (statusFilter) {
-  params.status = statusFilter;
+let dogs: Dog[] = [];
+const client = getClient();
+if (client) {
+  try {
+    dogs = await client.getDogsForGrid({
+      filter: filter === "sires" || filter === "dams" ? filter : "all",
+      status: status ?? "active",
+      limit: typeof limit === "number" && limit > 0 ? limit : 12,
+    });
+  } catch (_) { dogs = []; }
 }
-
-const response = await fetchDogs(params);
-const dogs = response.items || [];
 ---
 
 {
@@ -48,7 +45,7 @@ const dogs = response.items || [];
                 {dog.thumbnailPhotoUrl && (
                   <img
                     src={dog.thumbnailPhotoUrl}
-                    alt={dog.callName || dog.registeredName}
+                    alt={dog.name}
                     class="w-full aspect-[4/5] rounded-2xl object-cover"
                   />
                 )}
@@ -57,13 +54,13 @@ const dogs = response.items || [];
               {/* Text column */}
               <div class={`${isEven ? "md:col-span-6 md:col-start-7" : "md:col-span-6 md:col-start-1 md:order-1"}`}>
                 <div class="text-xs uppercase tracking-widest text-accent mb-3">
-                  {dog.status || "Our Dog"}
+                  {dog.statuses[0]?.name || "Our Dog"}
                 </div>
                 <h3 class="text-4xl md:text-5xl font-serif font-bold text-primary mb-2">
-                  {dog.callName || dog.registeredName}
+                  {dog.name}
                 </h3>
                 <p class="text-sm uppercase tracking-wider text-foreground/60 mb-6">
-                  {dog.registeredName && dog.callName ? dog.registeredName : ""}
+                  {dog.callName && dog.registeredName !== dog.callName ? dog.registeredName : ""}
                 </p>
                 {dog.description && (
                   <p class="text-lg leading-relaxed text-foreground/80">
