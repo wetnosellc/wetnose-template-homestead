@@ -1,5 +1,4 @@
 ---
-import { safeGetManifest } from "@/lib/client";
 import type { WidgetInstance } from "@/lib/template-kit";
 
 const SITE_ID = import.meta.env.WETNOSE_SITE_ID ?? "";
@@ -9,16 +8,12 @@ interface Props {
 }
 
 const { widget } = Astro.props;
-const { recipientEmail = "", confirmationText = "Thanks — we'll be in touch." } = widget.props as {
-  recipientEmail?: string;
+// The recipient is resolved server-side from the site's kennel (see the
+// contact endpoint). We deliberately do NOT put the kennel email in the form
+// markup — it would expose it to scrapers.
+const { confirmationText = "Thanks — we'll be in touch." } = widget.props as {
   confirmationText?: string;
 };
-
-let emailTo = recipientEmail;
-if (!emailTo) {
-  const manifest = await safeGetManifest();
-  emailTo = manifest?.kennel?.email || "";
-}
 ---
 
 <section class="py-20 px-6">
@@ -83,9 +78,6 @@ if (!emailTo) {
         ></textarea>
       </div>
 
-      {emailTo && (
-        <input type="hidden" name="recipientEmail" value={emailTo} />
-      )}
       <input type="hidden" name="confirmationText" value={confirmationText} />
 
       {/* Submit */}
