@@ -4,6 +4,7 @@ import { ViewTransitions } from 'astro:transitions';
 import MetaTags from '@/components/MetaTags.astro';
 import FooterWidgetRenderer from '@/components/FooterWidgetRenderer.astro';
 import { safeGetManifest } from '@/lib/client';
+import { buildPageMeta } from '@wetnosellc/template-kit';
 import type { Widget as WidgetInstance } from '@wetnosellc/template-kit';
 
 interface Props {
@@ -31,9 +32,27 @@ const logoUrl = manifest?.logoUrl ?? null;
 const cmsPages = manifest?.pages ?? [];
 const footerWidgets: WidgetInstance[] = (manifest?.themeTokens?.footerWidgets as WidgetInstance[]) ?? [];
 
-const fullTitle = title.includes(kennelName) ? title : `${title} — ${kennelName}`;
 const resolvedDescription = description ?? `${kennelName} — kennel website`;
-const jsonLdArr = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+
+// SEO meta via the shared kit builder — real per-kennel values from the
+// manifest (title, canonical, OG) plus the robots signal. Without a manifest
+// (local dev / API down) we keep the page out of search.
+const siteTitle = manifest?.siteTitle || kennelName;
+const siteDescription = manifest?.siteDescription || resolvedDescription;
+const siteUrl = manifest?.canonicalSiteUrl || 'http://localhost:4321';
+const meta = buildPageMeta({
+  siteTitle,
+  siteDescription,
+  pageTitle: title,
+  pageDescription: description ?? null,
+  path: Astro.url.pathname,
+  siteUrl,
+  ogImage: ogImage ?? manifest?.coverPhotoUrl ?? manifest?.logoUrl ?? null,
+  ogType,
+  noindexPage: !manifest,
+  // Site-level search-visibility switch: a hidden site emits a noindex backstop.
+  siteSearchIndexable: manifest?.searchIndexable,
+});
 
 const reserved = new Set(['dogs', 'litters', 'contact', 'screening', '404']);
 const visiblePages = cmsPages.filter((p) => p.slug && !reserved.has(p.slug));
@@ -52,7 +71,7 @@ for (const p of visiblePages) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <MetaTags title={fullTitle} description={resolvedDescription} ogImage={ogImage} ogType={ogType} />
+    <MetaTags meta={meta} jsonLd={jsonLd} />
     <meta name="x-wetnose-build-id" content={buildId} />
     <meta name="x-wetnose-build-time" content={buildTime} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -60,9 +79,6 @@ for (const p of visiblePages) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <ViewTransitions />
-    {jsonLdArr.map(ld => (
-      <script is:inline type="application/ld+json" set:html={JSON.stringify(ld)} />
-    ))}
   </head>
   <body class="min-h-screen flex flex-col bg-background">
     <header class="sticky top-0 z-50 bg-background border-b border-stone-200/60">
