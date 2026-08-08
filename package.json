@@ -9,7 +9,7 @@
     "check": "astro check"
   },
   "dependencies": {
-    "@wetnosellc/template-kit": "^2.24.1",
+    "@wetnosellc/template-kit": "^2.25.0",
     "@astrojs/react": "^4.0.0",
     "@astrojs/sitemap": "^3.0.0",
     "@tailwindcss/vite": "^4.0.0",
