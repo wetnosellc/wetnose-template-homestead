@@ -1,7 +1,8 @@
 ---
-import { getClient } from "@/lib/client";
+import { getClient, SITE_ID } from "@/lib/client";
 import type { WidgetInstance } from "@/lib/template-kit";
 import type { Litter } from "@wetnosellc/template-kit";
+import { safeGetPublicLittersForGrid } from "@wetnosellc/template-kit";
 
 interface Props {
   widget: WidgetInstance;
@@ -13,16 +14,11 @@ const { filter = "current", limit = 6 } = widget.props as {
   limit?: number;
 };
 
-let litters: Litter[] = [];
-const client = getClient();
-if (client) {
-  try {
-    litters = await client.getLittersForGrid({
-      filter: (filter as "current" | "past" | "all" | "planned"),
-      maxItems: typeof limit === "number" && limit > 0 ? limit : 6,
-    });
-  } catch (_) { litters = []; }
-}
+// Public, salesStatus-free fetch — litter-level availability only.
+const litters: Litter[] = await safeGetPublicLittersForGrid(getClient(), SITE_ID, {
+  filter: (filter as "current" | "past" | "all" | "planned"),
+  maxItems: typeof limit === "number" && limit > 0 ? limit : 6,
+});
 ---
 
 {
@@ -82,9 +78,9 @@ if (client) {
                       {litter.sire.callName || litter.sire.registeredName} × {litter.dam.callName || litter.dam.registeredName}
                     </p>
                   )}
-                  {litter.puppies.length > 0 && (
+                  {litter.availability && litter.availability.total > 0 && (
                     <p class="text-base text-foreground/80 leading-relaxed">
-                      {litter.puppies.length} puppet{litter.puppies.length === 1 ? "" : "s"}
+                      {litter.availability.total} available
                     </p>
                   )}
                 </div>
